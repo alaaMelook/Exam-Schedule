@@ -1,0 +1,382 @@
+'use client'
+import { useEffect, useState, useCallback } from 'react'
+import { supabase, Employee, Committee, Assignment } from '@/lib/supabase'
+import Navbar from '@/components/Navbar'
+import EmployeeScheduleCard from '@/components/EmployeeScheduleCard'
+import {
+  Plus, Calendar, X, Check, Download, Users,
+  Search, Trash2, Wand2, AlertTriangle, RotateCcw, Shuffle
+} from 'lucide-react'
+import { getArabicDay, formatDate } from '@/lib/utils'
+import { autoDistribute, DistributionMode } from '@/lib/distribute'
+
+type ScheduleRow = Assignment & { committees: Committee }
+type AssignmentWithAll = Assignment & { employees: Employee; committees: Committee }
+
+export default function AssignmentsPage() {
+  const [employees, setEmployees] = useState<Employee[]>([])
+  const [committees, setCommittees] = useState<Committee[]>([])
+  const [assignments, setAssignments] = useState<AssignmentWithAll[]>([])
+  const [loading, setLoading] = useState(true)
+  const [viewMode, setViewMode] = useState<'byEmployee' | 'byDate'>('byEmployee')
+  const [searchEmp, setSearchEmp] = useState('')
+  const [showAddModal, setShowAddModal] = useState(false)
+  const [showAutoModal, setShowAutoModal] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [distributing, setDistributing] = useState(false)
+  const [autoWarnings, setAutoWarnings] = useState<string[]>([])
+  const [autoMode, setAutoMode] = useState<DistributionMode>('sequential')
+  const [clearFirst, setClearFirst] = useState(false)
+  const [form, setForm] = useState({
+    employee_id: '', committee_id: '', type: 'أساسي' as 'أساسي' | 'احتياطي'
+  })
+
+  const fetchData = useCallback(async () => {
+    const [empRes, comRes, assRes] = await Promise.all([
+      supabase.from('employees').select('*').order('name'),
+      supabase.from('committees').select('*').order('exam_date').order('start_time'),
+      supabase.from('assignments').select('*, employees(*), committees(*)').order('created_at'),
+    ])
+    setEmployees(empRes.data || [])
+    setCommittees(comRes.data || [])
+    setAssignments((assRes.data as AssignmentWithAll[]) || [])
+    setLoading(false)
+  }, [])
+
+  useEffect(() => { fetchData() }, [fetchData])
+
+  async function handleSave() {
+    if (!form.employee_id || !form.committee_id) return
+    setSaving(true)
+    await supabase.from('assignments').upsert(
+      { employee_id: form.employee_id, committee_id: form.committee_id, type: form.type },
+      { onConflict: 'employee_id,committee_id' }
+    )
+    await fetchData()
+    setSaving(false)
+    setShowAddModal(false)
+  }
+
+  async function handleDelete(id: string) {
+    await supabase.from('assignments').delete().eq('id', id)
+    await fetchData()
+  }
+
+  async function handleClearAll() {
+    if (!confirm('هل تريد حذف جميع التكليفات؟')) return
+    await supabase.from('assignments').delete().neq('id', '00000000-0000-0000-0000-000000000000')
+    await fetchData()
+  }
+
+  async function handleAutoDistribute() {
+    setDistributing(true)
+    setAutoWarnings([])
+    try {
+      let currentAssignments: Assignment[] = assignments
+      if (clearFirst) {
+        await supabase.from('assignments').delete().neq('id', '00000000-0000-0000-0000-000000000000')
+        currentAssignments = []
+      }
+      const result = autoDistribute(employees, committees, currentAssignments, autoMode)
+      if (result.assignments.length > 0) {
+        await supabase.from('assignments').upsert(result.assignments, { onConflict: 'employee_id,committee_id' })
+      }
+      setAutoWarnings(result.warnings)
+      await fetchData()
+      if (result.warnings.length === 0) setShowAutoModal(false)
+    } catch {
+      setAutoWarnings(['حدث خطأ أثناء التوزيع'])
+    }
+    setDistributing(false)
+  }
+
+  async function handleExportAll() {
+    if (assignments.length === 0) return
+    const { exportAllScheduleExcel } = await import('@/lib/export')
+    const map = new Map<string, ScheduleRow[]>()
+    employees.forEach(e => {
+      map.set(e.id, assignments
+        .filter(a => a.employee_id === e.id)
+        .map(a => ({ ...a, committees: a.committees })) as ScheduleRow[])
+    })
+    await exportAllScheduleExcel(employees, map)
+  }
+
+  const filteredEmployees = employees.filter(e =>
+    e.name.includes(searchEmp) || (e.department || '').includes(searchEmp)
+  )
+
+  const byDateGroups = committees.reduce((acc, c) => {
+    const key = c.exam_date
+    if (!acc[key]) acc[key] = []
+    acc[key].push({ committee: c, comAssignments: assignments.filter(a => a.committee_id === c.id) })
+    return acc
+  }, {} as Record<string, { committee: Committee; comAssignments: AssignmentWithAll[] }[]>)
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <Navbar />
+      <main className="max-w-6xl mx-auto px-4 py-8">
+
+        {/* Header */}
+        <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
+          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+            <Calendar className="w-6 h-6 text-green-600" /> جدول توزيع الملاحظين
+          </h1>
+          <div className="flex items-center gap-2 flex-wrap no-print">
+            <button onClick={handleExportAll} className="btn-secondary">
+              <Download className="w-4 h-4" /> تصدير Excel
+            </button>
+            <button
+              onClick={() => { setAutoWarnings([]); setShowAutoModal(true) }}
+              className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 px-5 rounded-xl transition-all text-sm"
+            >
+              <Wand2 className="w-4 h-4" /> توزيع تلقائي
+            </button>
+            <button onClick={() => setShowAddModal(true)} className="btn-primary">
+              <Plus className="w-4 h-4" /> إضافة يدوي
+            </button>
+          </div>
+        </div>
+
+        {/* Stats */}
+        <div className="grid grid-cols-4 gap-4 mb-6">
+          {[
+            { label: 'الموظفون', value: employees.length },
+            { label: 'التكليفات', value: assignments.length },
+            { label: 'اللجان', value: committees.length },
+            { label: 'لجان مغطاة', value: new Set(assignments.map(a => a.committee_id)).size },
+          ].map(s => (
+            <div key={s.label} className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 text-center">
+              <div className="text-3xl font-bold text-gray-900">{loading ? '...' : s.value}</div>
+              <div className="text-gray-500 text-sm mt-1">{s.label}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* View Toggle */}
+        <div className="flex items-center justify-between mb-6 no-print flex-wrap gap-3">
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-1 flex gap-1">
+            {(['byEmployee', 'byDate'] as const).map(mode => (
+              <button key={mode} onClick={() => setViewMode(mode)}
+                className={`px-5 py-2 rounded-xl text-sm font-medium transition-all ${viewMode === mode ? 'bg-green-600 text-white shadow-sm' : 'text-gray-600 hover:bg-gray-50'
+                  }`}
+              >
+                {mode === 'byEmployee' ? 'عرض جدول كل موظف' : 'عرض حسب الموعد'}
+              </button>
+            ))}
+          </div>
+          <button onClick={handleClearAll} className="btn-danger">
+            <RotateCcw className="w-3.5 h-3.5" /> مسح كل التكليفات
+          </button>
+        </div>
+
+        {loading ? (
+          <div className="bg-white rounded-2xl p-12 text-center text-gray-400">جاري التحميل...</div>
+        ) : viewMode === 'byEmployee' ? (
+          <>
+            <div className="relative mb-5 no-print">
+              <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input type="text" placeholder="بحث بالاسم..." value={searchEmp}
+                onChange={e => setSearchEmp(e.target.value)}
+                className="w-full bg-white border border-gray-200 rounded-xl pr-10 pl-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+              />
+            </div>
+            {filteredEmployees.map(emp => (
+              <EmployeeScheduleCard
+                key={emp.id}
+                employee={emp}
+                rows={assignments.filter(a => a.employee_id === emp.id).map(a => ({ ...a, committees: a.committees })) as ScheduleRow[]}
+              />
+            ))}
+          </>
+        ) : (
+          <div className="space-y-6">
+            {Object.entries(byDateGroups).sort(([a], [b]) => a.localeCompare(b)).map(([date, groups]) => (
+              <div key={date} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                <div className="bg-gradient-to-l from-indigo-600 to-purple-600 px-6 py-3 flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-white" />
+                  <span className="font-bold text-white">{getArabicDay(date)} — {formatDate(date)}</span>
+                  <span className="text-purple-200 text-sm mr-1">({groups.length} لجنة)</span>
+                </div>
+                {groups.map(({ committee, comAssignments }) => (
+                  <div key={committee.id} className="border-b border-gray-100 last:border-0">
+                    <div className="px-6 py-3 bg-gray-50 flex items-center gap-3 flex-wrap">
+                      <span className="font-semibold text-gray-800">{committee.name}</span>
+                      <span className="text-gray-400 text-xs">{committee.college}</span>
+                      <span className="text-gray-400 text-xs">
+                        {committee.start_time.slice(0, 5)} - {committee.end_time.slice(0, 5)}
+                      </span>
+                      <div className="mr-auto flex gap-2 items-center">
+                        <span className="badge-main">أساسي: {committee.main_observers}</span>
+                        <span className="badge-backup">احتياطي: {committee.backup_observers}</span>
+                        <span className={`text-xs font-medium px-2 py-1 rounded-full ${comAssignments.length >= committee.main_observers + committee.backup_observers
+                            ? 'bg-green-100 text-green-700' : 'bg-red-50 text-red-500'
+                          }`}>
+                          مكلف: {comAssignments.length}
+                        </span>
+                      </div>
+                    </div>
+                    {comAssignments.length === 0
+                      ? <div className="px-6 py-4 text-gray-400 text-sm">لا يوجد ملاحظون مكلفون بعد</div>
+                      : (
+                        <div className="px-6 py-2">
+                          {comAssignments.map(a => (
+                            <div key={a.id} className="flex items-center justify-between py-2.5 border-b border-gray-50 last:border-0">
+                              <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 bg-gradient-to-br from-green-100 to-emerald-100 rounded-full flex items-center justify-center">
+                                  <Users className="w-4 h-4 text-green-600" />
+                                </div>
+                                <div>
+                                  <p className="text-sm font-semibold text-gray-800">{a.employees.name}</p>
+                                  <p className="text-xs text-gray-400">{a.employees.department}</p>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                {a.type === 'أساسي'
+                                  ? <span className="badge-main">أساسي</span>
+                                  : <span className="badge-backup">احتياطي</span>}
+                                <button onClick={() => handleDelete(a.id)} className="text-red-400 hover:text-red-600 p-1 no-print">
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+        )}
+      </main>
+
+      {/* Manual Add Modal */}
+      {showAddModal && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md">
+            <div className="flex items-center justify-between p-6 border-b border-gray-100">
+              <h2 className="font-bold text-lg">إضافة تكليف يدوي</h2>
+              <button onClick={() => setShowAddModal(false)} className="text-gray-400 hover:text-gray-600"><X className="w-5 h-5" /></button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">الموظف *</label>
+                <select value={form.employee_id} onChange={e => setForm({ ...form, employee_id: e.target.value })} className="input-field">
+                  <option value="">اختر الموظف</option>
+                  {employees.map(e => <option key={e.id} value={e.id}>{e.name}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">اللجنة *</label>
+                <select value={form.committee_id} onChange={e => setForm({ ...form, committee_id: e.target.value })} className="input-field">
+                  <option value="">اختر اللجنة</option>
+                  {committees.map(c => (
+                    <option key={c.id} value={c.id}>{getArabicDay(c.exam_date)} — {c.name} ({c.college})</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">النوع</label>
+                <div className="flex gap-3">
+                  {(['أساسي', 'احتياطي'] as const).map(t => (
+                    <button key={t} onClick={() => setForm({ ...form, type: t })}
+                      className={`flex-1 py-3 rounded-xl text-sm font-medium border-2 transition-all ${form.type === t
+                          ? t === 'أساسي' ? 'border-green-500 bg-green-50 text-green-700' : 'border-orange-400 bg-orange-50 text-orange-700'
+                          : 'border-gray-200 text-gray-600'
+                        }`}>{t}</button>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <div className="flex gap-3 p-6 pt-0">
+              <button onClick={handleSave} disabled={saving} className="btn-primary flex-1 justify-center">
+                <Check className="w-4 h-4" />{saving ? 'جاري الحفظ...' : 'حفظ'}
+              </button>
+              <button onClick={() => setShowAddModal(false)} className="btn-secondary">إلغاء</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Auto Distribution Modal */}
+      {showAutoModal && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md">
+            <div className="flex items-center justify-between p-6 border-b border-gray-100">
+              <h2 className="font-bold text-lg flex items-center gap-2">
+                <Wand2 className="w-5 h-5 text-indigo-600" /> التوزيع التلقائي
+              </h2>
+              <button onClick={() => setShowAutoModal(false)} className="text-gray-400 hover:text-gray-600"><X className="w-5 h-5" /></button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-3">طريقة التوزيع</label>
+                <div className="flex gap-3">
+                  <button onClick={() => setAutoMode('sequential')}
+                    className={`flex-1 p-4 rounded-xl border-2 text-sm transition-all text-right ${autoMode === 'sequential' ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200 hover:bg-gray-50'
+                      }`}
+                  >
+                    <div className="font-semibold text-gray-800 mb-1">بالتسلسل</div>
+                    <div className="text-gray-500 text-xs">يوازن الأعباء بين الموظفين</div>
+                  </button>
+                  <button onClick={() => setAutoMode('random')}
+                    className={`flex-1 p-4 rounded-xl border-2 text-sm transition-all text-right ${autoMode === 'random' ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200 hover:bg-gray-50'
+                      }`}
+                  >
+                    <div className="font-semibold text-gray-800 mb-1 flex items-center gap-1">
+                      <Shuffle className="w-3.5 h-3.5" /> عشوائي
+                    </div>
+                    <div className="text-gray-500 text-xs">توزيع عشوائي مع تجنب التعارض</div>
+                  </button>
+                </div>
+              </div>
+
+              <div onClick={() => setClearFirst(!clearFirst)}
+                className={`flex items-center gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all ${clearFirst ? 'border-red-400 bg-red-50' : 'border-gray-200 hover:bg-gray-50'
+                  }`}
+              >
+                <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${clearFirst ? 'bg-red-500 border-red-500' : 'border-gray-300'
+                  }`}>
+                  {clearFirst && <Check className="w-3 h-3 text-white" />}
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-800">مسح التكليفات الحالية أولاً</p>
+                  <p className="text-xs text-gray-500">سيتم حذف التكليفات القديمة قبل التوزيع الجديد</p>
+                </div>
+              </div>
+
+              <div className="bg-blue-50 rounded-xl p-4 text-xs text-blue-600 space-y-1">
+                <p className="font-semibold text-blue-700 text-sm">ملاحظات:</p>
+                <p>• يراعي عدم تعارض مواعيد الموظف</p>
+                <p>• يوزع بحسب عدد الملاحظين المطلوب لكل لجنة</p>
+                <p>• يمكن التعديل يدوياً بعد التوزيع</p>
+              </div>
+
+              {autoWarnings.length > 0 && (
+                <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
+                  <div className="flex items-center gap-2 text-yellow-700 font-medium text-sm mb-2">
+                    <AlertTriangle className="w-4 h-4" /> تحذيرات
+                  </div>
+                  <ul className="text-xs text-yellow-600 space-y-1">
+                    {autoWarnings.map((w, i) => <li key={i}>• {w}</li>)}
+                  </ul>
+                </div>
+              )}
+            </div>
+            <div className="flex gap-3 p-6 pt-0">
+              <button onClick={handleAutoDistribute} disabled={distributing}
+                className="flex items-center gap-2 justify-center bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 px-5 rounded-xl transition-all flex-1 text-sm"
+              >
+                <Wand2 className="w-4 h-4" />
+                {distributing ? 'جاري التوزيع...' : 'بدء التوزيع التلقائي'}
+              </button>
+              <button onClick={() => setShowAutoModal(false)} className="btn-secondary">إلغاء</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
