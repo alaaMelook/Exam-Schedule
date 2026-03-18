@@ -1,9 +1,18 @@
-import type { Metadata } from 'next'
+'use client'
+import { LanguageProvider, useTranslation } from '@/lib/i18n'
 import './globals.css'
 
-export const metadata: Metadata = {
-  title: 'جدول توزيع الملاحظين',
-  description: 'نظام إدارة جداول الملاحظين في الامتحانات',
+function HtmlWrapper({ children }: { children: React.ReactNode }) {
+  const { lang } = useTranslation()
+  return (
+    <html lang={lang} dir={lang === 'ar' ? 'rtl' : 'ltr'}>
+      <head>
+        <title>{lang === 'ar' ? 'جدول توزيع الملاحظين' : 'Observer Distribution Schedule'}</title>
+        <meta name="description" content={lang === 'ar' ? 'نظام إدارة جداول الملاحظين في الامتحانات' : 'Exam observer schedule management system'} />
+      </head>
+      <body>{children}</body>
+    </html>
+  )
 }
 
 export default function RootLayout({
@@ -12,8 +21,8 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="ar" dir="rtl">
-      <body>{children}</body>
-    </html>
+    <LanguageProvider>
+      <HtmlWrapper>{children}</HtmlWrapper>
+    </LanguageProvider>
   )
 }

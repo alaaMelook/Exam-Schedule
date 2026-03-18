@@ -4,8 +4,10 @@ import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import Navbar from '@/components/Navbar'
 import { Users, Building2, Calendar, ChevronLeft, CheckCircle2 } from 'lucide-react'
+import { useTranslation } from '@/lib/i18n'
 
 export default function HomePage() {
+  const { t, lang } = useTranslation()
   const [stats, setStats] = useState({ employees: 0, committees: 0, assignments: 0, covered: 0 })
   const [loading, setLoading] = useState(true)
 
@@ -17,7 +19,6 @@ export default function HomePage() {
         supabase.from('assignments').select('id', { count: 'exact', head: true }),
       ])
 
-      // Count committees that have at least one assignment
       const { data: assignedCommittees } = await supabase
         .from('assignments')
         .select('committee_id')
@@ -36,10 +37,10 @@ export default function HomePage() {
   }, [])
 
   const statCards = [
-    { label: 'الموظفون', value: stats.employees, color: 'bg-blue-500', icon: Users, href: '/employees' },
-    { label: 'اللجان', value: stats.committees, color: 'bg-purple-500', icon: Building2, href: '/committees' },
-    { label: 'التكليفات', value: stats.assignments, color: 'bg-green-500', icon: Calendar, href: '/assignments' },
-    { label: 'لجان مغطاة', value: stats.covered, color: 'bg-emerald-500', icon: CheckCircle2, href: '/assignments' },
+    { label: t('home.stat.employees'), value: stats.employees, color: 'bg-blue-500', icon: Users, href: '/employees' },
+    { label: t('home.stat.committees'), value: stats.committees, color: 'bg-purple-500', icon: Building2, href: '/committees' },
+    { label: t('home.stat.assignments'), value: stats.assignments, color: 'bg-green-500', icon: Calendar, href: '/assignments' },
+    { label: t('home.stat.covered'), value: stats.covered, color: 'bg-emerald-500', icon: CheckCircle2, href: '/assignments' },
   ]
 
   return (
@@ -48,8 +49,8 @@ export default function HomePage() {
       <main className="max-w-7xl mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">جدول توزيع الملاحظين</h1>
-          <p className="text-gray-500 mt-1">إدارة توزيع الملاحظين على اللجان الامتحانية</p>
+          <h1 className="text-3xl font-bold text-gray-900">{t('home.title')}</h1>
+          <p className="text-gray-500 mt-1">{t('home.subtitle')}</p>
         </div>
 
         {/* Stats */}
@@ -75,10 +76,10 @@ export default function HomePage() {
                 <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center group-hover:bg-blue-100 transition-colors">
                   <Users className="w-6 h-6 text-blue-600" />
                 </div>
-                <ChevronLeft className="w-5 h-5 text-gray-400 group-hover:text-gray-600" />
+                <ChevronLeft className={`w-5 h-5 text-gray-400 group-hover:text-gray-600 ${lang === 'en' ? 'rotate-180' : ''}`} />
               </div>
-              <h3 className="font-bold text-gray-900 text-lg">إدارة الموظفين</h3>
-              <p className="text-gray-500 text-sm mt-1">إضافة وتعديل بيانات الموظفين الملاحظين</p>
+              <h3 className="font-bold text-gray-900 text-lg">{t('home.card.employees.title')}</h3>
+              <p className="text-gray-500 text-sm mt-1">{t('home.card.employees.desc')}</p>
             </div>
           </Link>
 
@@ -88,10 +89,10 @@ export default function HomePage() {
                 <div className="w-12 h-12 bg-purple-50 rounded-xl flex items-center justify-center group-hover:bg-purple-100 transition-colors">
                   <Building2 className="w-6 h-6 text-purple-600" />
                 </div>
-                <ChevronLeft className="w-5 h-5 text-gray-400 group-hover:text-gray-600" />
+                <ChevronLeft className={`w-5 h-5 text-gray-400 group-hover:text-gray-600 ${lang === 'en' ? 'rotate-180' : ''}`} />
               </div>
-              <h3 className="font-bold text-gray-900 text-lg">إدارة اللجان</h3>
-              <p className="text-gray-500 text-sm mt-1">إضافة اللجان والأماكن والأوقات</p>
+              <h3 className="font-bold text-gray-900 text-lg">{t('home.card.committees.title')}</h3>
+              <p className="text-gray-500 text-sm mt-1">{t('home.card.committees.desc')}</p>
             </div>
           </Link>
 
@@ -101,10 +102,10 @@ export default function HomePage() {
                 <div className="w-12 h-12 bg-green-50 rounded-xl flex items-center justify-center group-hover:bg-green-100 transition-colors">
                   <Calendar className="w-6 h-6 text-green-600" />
                 </div>
-                <ChevronLeft className="w-5 h-5 text-gray-400 group-hover:text-gray-600" />
+                <ChevronLeft className={`w-5 h-5 text-gray-400 group-hover:text-gray-600 ${lang === 'en' ? 'rotate-180' : ''}`} />
               </div>
-              <h3 className="font-bold text-gray-900 text-lg">توزيع الملاحظين</h3>
-              <p className="text-gray-500 text-sm mt-1">تكليف الموظفين على اللجان وتصدير الجداول</p>
+              <h3 className="font-bold text-gray-900 text-lg">{t('home.card.assignments.title')}</h3>
+              <p className="text-gray-500 text-sm mt-1">{t('home.card.assignments.desc')}</p>
             </div>
           </Link>
         </div>

@@ -9,7 +9,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 export interface Employee {
   id: string
   name: string
-  national_id?: string
+  phone?: string
   department?: string
   role?: string
   created_at?: string

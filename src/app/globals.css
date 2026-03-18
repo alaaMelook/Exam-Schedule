@@ -5,8 +5,17 @@
 @tailwind utilities;
 
 * {
-  direction: rtl;
   font-family: 'Cairo', 'Tajawal', sans-serif;
+}
+
+[dir="rtl"] .schedule-table th,
+[dir="rtl"] .schedule-table td {
+  text-align: right;
+}
+
+[dir="ltr"] .schedule-table th,
+[dir="ltr"] .schedule-table td {
+  text-align: left;
 }
 
 body {
@@ -50,10 +59,10 @@ body {
   @apply w-full border-collapse text-sm;
 }
 .schedule-table th {
-  @apply bg-gray-50 text-gray-600 font-semibold py-3 px-4 text-right border-b border-gray-200;
+  @apply bg-gray-50 text-gray-600 font-semibold py-3 px-4 border-b border-gray-200;
 }
 .schedule-table td {
-  @apply py-3 px-4 text-right border-b border-gray-100;
+  @apply py-3 px-4 border-b border-gray-100;
 }
 .schedule-table tr:hover td {
   @apply bg-gray-50;
