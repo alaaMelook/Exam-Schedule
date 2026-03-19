@@ -2,6 +2,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { supabase, Employee, Committee, Assignment } from '@/lib/supabase'
 import Navbar from '@/components/Navbar'
+import Footer from '@/components/Footer'
 import EmployeeScheduleCard from '@/components/EmployeeScheduleCard'
 import { Plus, Calendar, X, Check, Download, Users, Search, Trash2, Wand2, AlertTriangle, RotateCcw, Shuffle } from 'lucide-react'
 import { getArabicDay, formatDate } from '@/lib/utils'
@@ -107,17 +108,17 @@ export default function AssignmentsPage() {
   }, {} as Record<string, { committee: Committee; comAssignments: AssignmentWithAll[] }[]>)
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen flex flex-col">
       <Navbar />
-      <main className="max-w-6xl mx-auto px-4 py-8">
+      <main className="max-w-6xl mx-auto px-4 py-8 flex-1">
         <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
-          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-            <Calendar className="w-6 h-6 text-green-600" /> {t('asg.title')}
+          <h1 className="text-2xl font-bold flex items-center gap-2" style={{ color: '#3d3229' }}>
+            <Calendar className="w-6 h-6" style={{ color: 'var(--accent-primary)' }} /> {t('asg.title')}
           </h1>
           <div className="flex items-center gap-2 flex-wrap no-print">
             <button onClick={handleExportAll} className="btn-secondary"><Download className="w-4 h-4" /> {t('asg.export')}</button>
             <button onClick={() => { setAutoWarnings([]); setShowAutoModal(true) }}
-              className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 px-5 rounded-xl transition-all text-sm">
+              className="flex items-center gap-2 text-white font-semibold py-2.5 px-5 rounded-xl transition-all text-sm" style={{ background: 'linear-gradient(135deg, #8b6cc1, #6b4fa0)' }}>
               <Wand2 className="w-4 h-4" /> {t('asg.auto')}
             </button>
             <button onClick={() => setShowAddModal(true)} className="btn-primary"><Plus className="w-4 h-4" /> {t('asg.addManual')}</button>
@@ -142,7 +143,8 @@ export default function AssignmentsPage() {
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-1 flex gap-1">
             {(['byEmployee', 'byDate'] as const).map(mode => (
               <button key={mode} onClick={() => setViewMode(mode)}
-                className={`px-5 py-2 rounded-xl text-sm font-medium transition-all ${viewMode === mode ? 'bg-green-600 text-white shadow-sm' : 'text-gray-600 hover:bg-gray-50'}`}>
+                className={`px-5 py-2 rounded-xl text-sm font-medium transition-all ${viewMode === mode ? 'text-white shadow-sm' : 'text-gray-600 hover:bg-gray-50'}`}
+                style={viewMode === mode ? { background: 'var(--teal)' } : {}}>
                 {mode === 'byEmployee' ? t('asg.view.byEmployee') : t('asg.view.byDate')}
               </button>
             ))}
@@ -158,7 +160,7 @@ export default function AssignmentsPage() {
               <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input type="text" placeholder={t('asg.searchEmp')} value={searchEmp}
                 onChange={e => setSearchEmp(e.target.value)}
-                className="w-full bg-white border border-gray-200 rounded-xl pr-10 pl-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
+                className="w-full bg-white border border-gray-200 rounded-xl pr-10 pl-4 py-2.5 text-sm focus:outline-none focus:ring-2" style={{ '--tw-ring-color': 'var(--accent-primary)' } as React.CSSProperties} />
             </div>
             {filteredEmployees.map(emp => (
               <EmployeeScheduleCard key={emp.id} employee={emp}
@@ -183,7 +185,7 @@ export default function AssignmentsPage() {
                       <div className="mr-auto flex gap-2 items-center">
                         <span className="badge-main">{t('asg.type.main')}: {committee.main_observers}</span>
                         <span className="badge-backup">{t('asg.type.backup')}: {committee.backup_observers}</span>
-                        <span className={`text-xs font-medium px-2 py-1 rounded-full ${comAssignments.length >= committee.main_observers + committee.backup_observers ? 'bg-green-100 text-green-700' : 'bg-red-50 text-red-500'}`}>
+                        <span className={`text-xs font-medium px-2 py-1 rounded-full ${comAssignments.length >= committee.main_observers + committee.backup_observers ? 'bg-amber-100 text-amber-700' : 'bg-red-50 text-red-500'}`}>
                           {t('asg.assigned')}: {comAssignments.length}
                         </span>
                       </div>
@@ -194,8 +196,8 @@ export default function AssignmentsPage() {
                           {comAssignments.map(a => (
                             <div key={a.id} className="flex items-center justify-between py-2.5 border-b border-gray-50 last:border-0">
                               <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 bg-gradient-to-br from-green-100 to-emerald-100 rounded-full flex items-center justify-center">
-                                  <Users className="w-4 h-4 text-green-600" />
+                                <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: 'var(--teal-light)' }}>
+                                  <Users className="w-4 h-4" style={{ color: 'var(--teal)' }} />
                                 </div>
                                 <div>
                                   <p className="text-sm font-semibold text-gray-800">{a.employees.name}</p>
@@ -217,6 +219,7 @@ export default function AssignmentsPage() {
           </div>
         )}
       </main>
+      <Footer />
 
       {showAddModal && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
@@ -246,7 +249,7 @@ export default function AssignmentsPage() {
                   {(['أساسي', 'احتياطي'] as const).map(tp => (
                     <button key={tp} onClick={() => setForm({ ...form, type: tp })}
                       className={`flex-1 py-3 rounded-xl text-sm font-medium border-2 transition-all ${form.type === tp
-                        ? tp === 'أساسي' ? 'border-green-500 bg-green-50 text-green-700' : 'border-orange-400 bg-orange-50 text-orange-700'
+                        ? tp === 'أساسي' ? 'border-amber-500 bg-amber-50 text-amber-700' : 'border-orange-400 bg-orange-50 text-orange-700'
                         : 'border-gray-200 text-gray-600'}`}>
                       {tp === 'أساسي' ? t('asg.type.main') : t('asg.type.backup')}
                     </button>

@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { supabase, Committee } from '@/lib/supabase'
 import Navbar from '@/components/Navbar'
+import Footer from '@/components/Footer'
 import { Plus, Building2, Pencil, Trash2, X, Check, Calendar, Upload, Download } from 'lucide-react'
 import { getArabicDay, formatDate } from '@/lib/utils'
 import * as XLSX from 'xlsx'
@@ -106,13 +107,13 @@ export default function CommitteesPage() {
   }, {} as Record<string, Committee[]>)
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen flex flex-col">
       <Navbar />
       <main className="max-w-6xl mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-              <Building2 className="w-6 h-6 text-purple-600" /> {t('com.title')}
+            <h1 className="text-2xl font-bold flex items-center gap-2" style={{ color: '#3d3229' }}>
+              <Building2 className="w-6 h-6" style={{ color: '#9b7dcf' }} /> {t('com.title')}
             </h1>
             <p className="text-gray-500 text-sm mt-1">{committees.length} {t('com.count')}</p>
           </div>
@@ -125,7 +126,7 @@ export default function CommitteesPage() {
               {importing ? t('com.importing') : t('com.import')}
               <input type="file" accept=".xlsx,.xls" className="hidden" onChange={handleImportExcel} disabled={importing} />
             </label>
-            <button onClick={openAdd} className="btn-primary bg-purple-600 hover:bg-purple-700">
+            <button onClick={openAdd} className="btn-primary" style={{ background: 'linear-gradient(135deg, #9b7dcf, #7c5db5)' }}>
               <Plus className="w-4 h-4" /> {t('com.add')}
             </button>
           </div>
@@ -172,6 +173,7 @@ export default function CommitteesPage() {
           </div>
         )}
       </main>
+      <Footer />
 
       {showModal && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
@@ -217,7 +219,7 @@ export default function CommitteesPage() {
               </div>
             </div>
             <div className="flex gap-3 p-6 pt-0">
-              <button onClick={handleSave} disabled={saving} className="btn-primary flex-1 justify-center bg-purple-600 hover:bg-purple-700">
+              <button onClick={handleSave} disabled={saving} className="btn-primary flex-1 justify-center" style={{ background: 'linear-gradient(135deg, #9b7dcf, #7c5db5)' }}>
                 <Check className="w-4 h-4" />{saving ? t('common.saving') : t('common.save')}
               </button>
               <button onClick={() => setShowModal(false)} className="btn-secondary">{t('common.cancel')}</button>

@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { supabase, Employee } from '@/lib/supabase'
 import Navbar from '@/components/Navbar'
+import Footer from '@/components/Footer'
 import { Plus, Search, Pencil, Trash2, X, Check, Users, Upload, Download } from 'lucide-react'
 import * as XLSX from 'xlsx'
 import { useTranslation } from '@/lib/i18n'
@@ -106,14 +107,14 @@ export default function EmployeesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen flex flex-col">
       <Navbar />
       <main className="max-w-6xl mx-auto px-4 py-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-              <Users className="w-6 h-6 text-blue-600" /> {t('emp.title')}
+            <h1 className="text-2xl font-bold flex items-center gap-2" style={{ color: '#3d3229' }}>
+              <Users className="w-6 h-6" style={{ color: 'var(--teal)' }} /> {t('emp.title')}
             </h1>
             <p className="text-gray-500 text-sm mt-1">{employees.length} {t('emp.count')}</p>
           </div>
@@ -147,7 +148,7 @@ export default function EmployeesPage() {
         </div>
 
         {/* Table */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="bg-white rounded-2xl shadow-sm overflow-hidden" style={{ border: '1px solid var(--beige-200)' }}>
           {loading ? (
             <div className="p-12 text-center text-gray-400">{t('emp.loading')}</div>
           ) : filtered.length === 0 ? (
@@ -193,6 +194,7 @@ export default function EmployeesPage() {
           )}
         </div>
       </main>
+      <Footer />
 
       {/* Modal */}
       {showModal && (

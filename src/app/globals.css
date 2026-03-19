@@ -4,6 +4,26 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --beige-50: #faf8f5;
+  --beige-100: #f5f0e8;
+  --beige-200: #ebe3d5;
+  --beige-300: #ddd1bd;
+  --beige-400: #c9b89a;
+  --beige-500: #b5a07d;
+  --beige-600: #9c8563;
+  --accent-primary: #c8956c;
+  --accent-dark: #a87650;
+  --accent-light: #f7ede3;
+  --gold: #d4a853;
+  --gold-light: #faf3e0;
+  --teal: #b07a56;
+  --teal-light: #f7ede3;
+  --teal-dark: #8f6245;
+  --warm-red: #d4726a;
+  --warm-red-light: #fdf0ef;
+}
+
 * {
   font-family: 'Cairo', 'Tajawal', sans-serif;
 }
@@ -19,8 +39,9 @@
 }
 
 body {
-  background-color: #f5f7fa;
-  color: #1a1a2e;
+  background: linear-gradient(135deg, var(--beige-50) 0%, #fdf9f3 50%, var(--beige-100) 100%);
+  color: #3d3229;
+  min-height: 100vh;
 }
 
 /* Custom scrollbar */
@@ -29,24 +50,29 @@ body {
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: var(--beige-100);
 }
 ::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
+  background: var(--beige-400);
   border-radius: 3px;
 }
 
 /* Card styles */
 .card {
-  @apply bg-white rounded-2xl shadow-sm border border-gray-100 p-6;
+  @apply bg-white rounded-2xl shadow-sm p-6;
+  border: 1px solid var(--beige-200);
 }
 
 /* Badge */
 .badge-main {
-  @apply bg-green-100 text-green-700 text-xs font-semibold px-2 py-1 rounded-full;
+  background: var(--teal-light);
+  color: var(--teal-dark);
+  @apply text-xs font-semibold px-2.5 py-1 rounded-full;
 }
 .badge-backup {
-  @apply bg-orange-100 text-orange-700 text-xs font-semibold px-2 py-1 rounded-full;
+  background: var(--gold-light);
+  color: #9a7d2e;
+  @apply text-xs font-semibold px-2.5 py-1 rounded-full;
 }
 
 /* Stat card */
@@ -59,29 +85,56 @@ body {
   @apply w-full border-collapse text-sm;
 }
 .schedule-table th {
-  @apply bg-gray-50 text-gray-600 font-semibold py-3 px-4 border-b border-gray-200;
+  background: var(--beige-50);
+  color: #6b5c4d;
+  @apply font-semibold py-3 px-4;
+  border-bottom: 2px solid var(--beige-200);
 }
 .schedule-table td {
-  @apply py-3 px-4 border-b border-gray-100;
+  @apply py-3 px-4;
+  border-bottom: 1px solid var(--beige-100);
 }
 .schedule-table tr:hover td {
-  @apply bg-gray-50;
+  background: var(--beige-50);
 }
 
 /* Input styles */
 .input-field {
-  @apply w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all;
+  @apply w-full rounded-xl px-4 py-3 text-sm focus:outline-none transition-all;
+  border: 1.5px solid var(--beige-300);
+  background: white;
+}
+.input-field:focus {
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 3px rgba(200, 149, 108, 0.15);
 }
 
 /* Button styles */
 .btn-primary {
-  @apply bg-green-600 hover:bg-green-700 text-white font-semibold py-2.5 px-5 rounded-xl transition-all duration-200 flex items-center gap-2 text-sm;
+  background: linear-gradient(135deg, var(--teal) 0%, var(--teal-dark) 100%);
+  @apply text-white font-semibold py-2.5 px-5 rounded-xl transition-all duration-200 flex items-center gap-2 text-sm;
+  box-shadow: 0 2px 8px rgba(176, 122, 86, 0.3);
+}
+.btn-primary:hover {
+  box-shadow: 0 4px 14px rgba(176, 122, 86, 0.4);
+  transform: translateY(-1px);
 }
 .btn-secondary {
-  @apply bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2.5 px-5 rounded-xl transition-all duration-200 flex items-center gap-2 text-sm;
+  background: var(--beige-100);
+  color: #5a4d40;
+  @apply font-semibold py-2.5 px-5 rounded-xl transition-all duration-200 flex items-center gap-2 text-sm;
+  border: 1px solid var(--beige-200);
+}
+.btn-secondary:hover {
+  background: var(--beige-200);
 }
 .btn-danger {
-  @apply bg-red-50 hover:bg-red-100 text-red-600 font-semibold py-2 px-4 rounded-xl transition-all duration-200 flex items-center gap-2 text-sm;
+  background: var(--warm-red-light);
+  color: var(--warm-red);
+  @apply font-semibold py-2 px-4 rounded-xl transition-all duration-200 flex items-center gap-2 text-sm;
+}
+.btn-danger:hover {
+  background: #fbe3e1;
 }
 
 /* Print styles */
@@ -89,4 +142,5 @@ body {
   .no-print { display: none !important; }
   body { background: white; }
   .card { box-shadow: none; border: 1px solid #ddd; }
+  footer { display: none !important; }
 }

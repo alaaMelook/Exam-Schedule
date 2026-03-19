@@ -42,14 +42,14 @@ export default function EmployeeScheduleCard({ employee, rows }: Props) {
 
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-5">
-      <div className="bg-gradient-to-l from-green-600 to-emerald-500 px-6 py-4 flex items-center justify-between">
+      <div className="px-6 py-4 flex items-center justify-between" style={{ background: 'linear-gradient(135deg, var(--teal), var(--teal-dark))' }}>
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
             <User className="w-5 h-5 text-white" />
           </div>
           <div>
             <h3 className="font-bold text-white text-lg leading-tight">{employee.name}</h3>
-            <p className="text-green-100 text-sm">
+            <p className="text-sm" style={{ color: 'rgba(255,255,255,0.75)' }}>
               {t('card.sessions')}: {rows.length} &nbsp;|&nbsp;
               {t('card.main')}: {mainCount} &nbsp;|&nbsp;
               {t('card.backup')}: {backupCount}
