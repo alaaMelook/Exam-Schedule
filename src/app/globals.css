@@ -17,9 +17,12 @@
   --accent-light: #f7ede3;
   --gold: #d4a853;
   --gold-light: #faf3e0;
-  --teal: #b07a56;
-  --teal-light: #f7ede3;
-  --teal-dark: #8f6245;
+  --copper: #b07a56;
+  --copper-light: #f7ede3;
+  --copper-dark: #8f6245;
+  --plum: #9b7dcf;
+  --plum-dark: #7c5db5;
+  --plum-light: #f0eaf8;
   --warm-red: #d4726a;
   --warm-red-light: #fdf0ef;
 }
@@ -39,7 +42,7 @@
 }
 
 body {
-  background: linear-gradient(135deg, var(--beige-50) 0%, #fdf9f3 50%, var(--beige-100) 100%);
+  background: var(--beige-50);
   color: #3d3229;
   min-height: 100vh;
 }
@@ -65,8 +68,8 @@ body {
 
 /* Badge */
 .badge-main {
-  background: var(--teal-light);
-  color: var(--teal-dark);
+  background: var(--copper-light);
+  color: var(--copper-dark);
   @apply text-xs font-semibold px-2.5 py-1 rounded-full;
 }
 .badge-backup {
@@ -97,6 +100,9 @@ body {
 .schedule-table tr:hover td {
   background: var(--beige-50);
 }
+.schedule-table tr {
+  transition: background 0.15s ease;
+}
 
 /* Input styles */
 .input-field {
@@ -105,36 +111,62 @@ body {
   background: white;
 }
 .input-field:focus {
-  border-color: var(--accent-primary);
-  box-shadow: 0 0 0 3px rgba(200, 149, 108, 0.15);
+  border-color: var(--copper);
+  box-shadow: 0 0 0 3px rgba(176, 122, 86, 0.12);
 }
 
 /* Button styles */
 .btn-primary {
-  background: linear-gradient(135deg, var(--teal) 0%, var(--teal-dark) 100%);
+  background: linear-gradient(135deg, var(--copper) 0%, var(--copper-dark) 100%);
   @apply text-white font-semibold py-2.5 px-5 rounded-xl transition-all duration-200 flex items-center gap-2 text-sm;
-  box-shadow: 0 2px 8px rgba(176, 122, 86, 0.3);
+  box-shadow: 0 2px 8px rgba(176, 122, 86, 0.25);
 }
 .btn-primary:hover {
-  box-shadow: 0 4px 14px rgba(176, 122, 86, 0.4);
+  box-shadow: 0 4px 16px rgba(176, 122, 86, 0.35);
   transform: translateY(-1px);
 }
 .btn-secondary {
-  background: var(--beige-100);
+  background: white;
   color: #5a4d40;
   @apply font-semibold py-2.5 px-5 rounded-xl transition-all duration-200 flex items-center gap-2 text-sm;
-  border: 1px solid var(--beige-200);
+  border: 1.5px solid var(--beige-200);
 }
 .btn-secondary:hover {
-  background: var(--beige-200);
+  background: var(--beige-50);
+  border-color: var(--beige-300);
 }
 .btn-danger {
   background: var(--warm-red-light);
   color: var(--warm-red);
   @apply font-semibold py-2 px-4 rounded-xl transition-all duration-200 flex items-center gap-2 text-sm;
+  border: 1px solid transparent;
 }
 .btn-danger:hover {
   background: #fbe3e1;
+  border-color: #f0c0bc;
+}
+
+/* Glass card effect */
+.glass-card {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--beige-200);
+  @apply rounded-2xl shadow-sm;
+}
+
+/* Fade-in animation */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in {
+  animation: fadeInUp 0.4s ease-out;
+}
+
+/* Subtle pulse for stats */
+@keyframes gentlePulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.02); }
 }
 
 /* Print styles */

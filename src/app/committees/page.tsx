@@ -113,7 +113,7 @@ export default function CommitteesPage() {
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-2xl font-bold flex items-center gap-2" style={{ color: '#3d3229' }}>
-              <Building2 className="w-6 h-6" style={{ color: '#9b7dcf' }} /> {t('com.title')}
+              <Building2 className="w-6 h-6" style={{ color: 'var(--plum)' }} /> {t('com.title')}
             </h1>
             <p className="text-gray-500 text-sm mt-1">{committees.length} {t('com.count')}</p>
           </div>
@@ -126,7 +126,7 @@ export default function CommitteesPage() {
               {importing ? t('com.importing') : t('com.import')}
               <input type="file" accept=".xlsx,.xls" className="hidden" onChange={handleImportExcel} disabled={importing} />
             </label>
-            <button onClick={openAdd} className="btn-primary" style={{ background: 'linear-gradient(135deg, #9b7dcf, #7c5db5)' }}>
+            <button onClick={openAdd} className="btn-primary" style={{ background: 'linear-gradient(135deg, var(--plum), var(--plum-dark))' }}>
               <Plus className="w-4 h-4" /> {t('com.add')}
             </button>
           </div>
@@ -219,7 +219,7 @@ export default function CommitteesPage() {
               </div>
             </div>
             <div className="flex gap-3 p-6 pt-0">
-              <button onClick={handleSave} disabled={saving} className="btn-primary flex-1 justify-center" style={{ background: 'linear-gradient(135deg, #9b7dcf, #7c5db5)' }}>
+              <button onClick={handleSave} disabled={saving} className="btn-primary flex-1 justify-center" style={{ background: 'linear-gradient(135deg, var(--plum), var(--plum-dark))' }}>
                 <Check className="w-4 h-4" />{saving ? t('common.saving') : t('common.save')}
               </button>
               <button onClick={() => setShowModal(false)} className="btn-secondary">{t('common.cancel')}</button>

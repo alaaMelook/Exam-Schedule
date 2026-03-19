@@ -28,8 +28,8 @@ export default function HomePage() {
   }, [])
 
   const statCards = [
-    { label: t('home.stat.employees'), value: stats.employees, bg: 'linear-gradient(135deg, var(--teal), var(--teal-dark))', icon: Users, href: '/employees' },
-    { label: t('home.stat.committees'), value: stats.committees, bg: 'linear-gradient(135deg, #9b7dcf, #7c5db5)', icon: Building2, href: '/committees' },
+    { label: t('home.stat.employees'), value: stats.employees, bg: 'linear-gradient(135deg, var(--copper), var(--copper-dark))', icon: Users, href: '/employees' },
+    { label: t('home.stat.committees'), value: stats.committees, bg: 'linear-gradient(135deg, var(--plum), var(--plum-dark))', icon: Building2, href: '/committees' },
     { label: t('home.stat.assignments'), value: stats.assignments, bg: 'linear-gradient(135deg, var(--accent-primary), var(--accent-dark))', icon: Calendar, href: '/assignments' },
     { label: t('home.stat.covered'), value: stats.covered, bg: 'linear-gradient(135deg, var(--gold), #b8912e)', icon: CheckCircle2, href: '/assignments' },
   ]
@@ -37,25 +37,29 @@ export default function HomePage() {
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
-      <main className="max-w-7xl mx-auto px-4 py-8 flex-1">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold flex items-center gap-2" style={{ color: '#3d3229' }}>
-            <Sparkles className="w-7 h-7" style={{ color: 'var(--gold)' }} />
+      <main className="max-w-7xl mx-auto px-4 py-10 flex-1 w-full">
+        {/* Hero */}
+        <div className="text-center mb-10 animate-fade-in">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-medium mb-4" style={{ background: 'var(--copper-light)', color: 'var(--copper-dark)' }}>
+            <Sparkles className="w-3.5 h-3.5" />
+            {lang === 'ar' ? 'نظام إدارة جداول الملاحظين' : 'Observer Schedule Management System'}
+          </div>
+          <h1 className="text-4xl font-extrabold mb-2" style={{ color: '#3d3229' }}>
             {t('home.title')}
           </h1>
-          <p className="mt-1" style={{ color: '#9a8b7c' }}>{t('home.subtitle')}</p>
+          <p className="text-lg" style={{ color: '#9a8b7c' }}>{t('home.subtitle')}</p>
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          {statCards.map(({ label, value, bg, icon: Icon, href }) => (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
+          {statCards.map(({ label, value, bg, icon: Icon, href }, i) => (
             <Link key={label} href={href}>
-              <div className="bg-white rounded-2xl p-5 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer hover:-translate-y-1" style={{ border: '1px solid var(--beige-200)' }}>
+              <div className="bg-white rounded-2xl p-5 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer hover:-translate-y-1 animate-fade-in"
+                style={{ border: '1px solid var(--beige-200)', animationDelay: `${i * 80}ms`, animationFillMode: 'both' }}>
                 <div className="w-11 h-11 rounded-xl flex items-center justify-center mb-3" style={{ background: bg }}>
-                  <Icon className="w-6 h-6 text-white" />
+                  <Icon className="w-5 h-5 text-white" />
                 </div>
-                <div className="text-3xl font-bold" style={{ color: '#3d3229' }}>{loading ? '...' : value}</div>
+                <div className="text-3xl font-extrabold" style={{ color: '#3d3229' }}>{loading ? '...' : value}</div>
                 <div className="text-sm mt-1" style={{ color: '#9a8b7c' }}>{label}</div>
               </div>
             </Link>
@@ -63,45 +67,29 @@ export default function HomePage() {
         </div>
 
         {/* Quick Actions */}
+        <h2 className="text-lg font-bold mb-4" style={{ color: '#5a4d40' }}>
+          {lang === 'ar' ? '⚡ إجراءات سريعة' : '⚡ Quick Actions'}
+        </h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-          <Link href="/employees">
-            <div className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-all group cursor-pointer hover:-translate-y-1 duration-300" style={{ border: '1px solid var(--beige-200)' }}>
-              <div className="flex items-center justify-between mb-4">
-                <div className="w-12 h-12 rounded-xl flex items-center justify-center transition-colors" style={{ background: 'var(--teal-light)' }}>
-                  <Users className="w-6 h-6" style={{ color: 'var(--teal)' }} />
+          {[
+            { href: '/employees', icon: Users, color: 'var(--copper)', lightBg: 'var(--copper-light)', title: t('home.card.employees.title'), desc: t('home.card.employees.desc') },
+            { href: '/committees', icon: Building2, color: 'var(--plum)', lightBg: 'var(--plum-light)', title: t('home.card.committees.title'), desc: t('home.card.committees.desc') },
+            { href: '/assignments', icon: Calendar, color: 'var(--accent-primary)', lightBg: 'var(--accent-light)', title: t('home.card.assignments.title'), desc: t('home.card.assignments.desc') },
+          ].map(({ href, icon: Icon, color, lightBg, title, desc }, i) => (
+            <Link key={href} href={href}>
+              <div className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-lg transition-all group cursor-pointer hover:-translate-y-1.5 duration-300 animate-fade-in"
+                style={{ border: '1px solid var(--beige-200)', animationDelay: `${300 + i * 100}ms`, animationFillMode: 'both' }}>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ background: lightBg }}>
+                    <Icon className="w-6 h-6" style={{ color }} />
+                  </div>
+                  <ChevronLeft className={`w-5 h-5 transition-transform group-hover:translate-x-[-4px] ${lang === 'en' ? 'rotate-180 group-hover:translate-x-[4px]' : ''}`} style={{ color: 'var(--beige-400)' }} />
                 </div>
-                <ChevronLeft className={`w-5 h-5 group-hover:text-gray-600 ${lang === 'en' ? 'rotate-180' : ''}`} style={{ color: 'var(--beige-400)' }} />
+                <h3 className="font-bold text-lg" style={{ color: '#3d3229' }}>{title}</h3>
+                <p className="text-sm mt-1" style={{ color: '#9a8b7c' }}>{desc}</p>
               </div>
-              <h3 className="font-bold text-lg" style={{ color: '#3d3229' }}>{t('home.card.employees.title')}</h3>
-              <p className="text-sm mt-1" style={{ color: '#9a8b7c' }}>{t('home.card.employees.desc')}</p>
-            </div>
-          </Link>
-
-          <Link href="/committees">
-            <div className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-all group cursor-pointer hover:-translate-y-1 duration-300" style={{ border: '1px solid var(--beige-200)' }}>
-              <div className="flex items-center justify-between mb-4">
-                <div className="w-12 h-12 rounded-xl flex items-center justify-center transition-colors" style={{ background: '#f0eaf8' }}>
-                  <Building2 className="w-6 h-6" style={{ color: '#9b7dcf' }} />
-                </div>
-                <ChevronLeft className={`w-5 h-5 group-hover:text-gray-600 ${lang === 'en' ? 'rotate-180' : ''}`} style={{ color: 'var(--beige-400)' }} />
-              </div>
-              <h3 className="font-bold text-lg" style={{ color: '#3d3229' }}>{t('home.card.committees.title')}</h3>
-              <p className="text-sm mt-1" style={{ color: '#9a8b7c' }}>{t('home.card.committees.desc')}</p>
-            </div>
-          </Link>
-
-          <Link href="/assignments">
-            <div className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-all group cursor-pointer hover:-translate-y-1 duration-300" style={{ border: '1px solid var(--beige-200)' }}>
-              <div className="flex items-center justify-between mb-4">
-                <div className="w-12 h-12 rounded-xl flex items-center justify-center transition-colors" style={{ background: 'var(--accent-light)' }}>
-                  <Calendar className="w-6 h-6" style={{ color: 'var(--accent-primary)' }} />
-                </div>
-                <ChevronLeft className={`w-5 h-5 group-hover:text-gray-600 ${lang === 'en' ? 'rotate-180' : ''}`} style={{ color: 'var(--beige-400)' }} />
-              </div>
-              <h3 className="font-bold text-lg" style={{ color: '#3d3229' }}>{t('home.card.assignments.title')}</h3>
-              <p className="text-sm mt-1" style={{ color: '#9a8b7c' }}>{t('home.card.assignments.desc')}</p>
-            </div>
-          </Link>
+            </Link>
+          ))}
         </div>
       </main>
       <Footer />

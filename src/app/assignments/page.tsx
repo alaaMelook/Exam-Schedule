@@ -118,7 +118,7 @@ export default function AssignmentsPage() {
           <div className="flex items-center gap-2 flex-wrap no-print">
             <button onClick={handleExportAll} className="btn-secondary"><Download className="w-4 h-4" /> {t('asg.export')}</button>
             <button onClick={() => { setAutoWarnings([]); setShowAutoModal(true) }}
-              className="flex items-center gap-2 text-white font-semibold py-2.5 px-5 rounded-xl transition-all text-sm" style={{ background: 'linear-gradient(135deg, #8b6cc1, #6b4fa0)' }}>
+              className="flex items-center gap-2 text-white font-semibold py-2.5 px-5 rounded-xl transition-all text-sm" style={{ background: 'linear-gradient(135deg, var(--plum), var(--plum-dark))' }}>
               <Wand2 className="w-4 h-4" /> {t('asg.auto')}
             </button>
             <button onClick={() => setShowAddModal(true)} className="btn-primary"><Plus className="w-4 h-4" /> {t('asg.addManual')}</button>
@@ -144,7 +144,7 @@ export default function AssignmentsPage() {
             {(['byEmployee', 'byDate'] as const).map(mode => (
               <button key={mode} onClick={() => setViewMode(mode)}
                 className={`px-5 py-2 rounded-xl text-sm font-medium transition-all ${viewMode === mode ? 'text-white shadow-sm' : 'text-gray-600 hover:bg-gray-50'}`}
-                style={viewMode === mode ? { background: 'var(--teal)' } : {}}>
+                style={viewMode === mode ? { background: 'var(--copper)' } : {}}>
                 {mode === 'byEmployee' ? t('asg.view.byEmployee') : t('asg.view.byDate')}
               </button>
             ))}
@@ -196,8 +196,8 @@ export default function AssignmentsPage() {
                           {comAssignments.map(a => (
                             <div key={a.id} className="flex items-center justify-between py-2.5 border-b border-gray-50 last:border-0">
                               <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: 'var(--teal-light)' }}>
-                                  <Users className="w-4 h-4" style={{ color: 'var(--teal)' }} />
+                                <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: 'var(--copper-light)' }}>
+                                  <Users className="w-4 h-4" style={{ color: 'var(--copper)' }} />
                                 </div>
                                 <div>
                                   <p className="text-sm font-semibold text-gray-800">{a.employees.name}</p>

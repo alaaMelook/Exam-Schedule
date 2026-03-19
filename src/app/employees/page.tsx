@@ -114,7 +114,7 @@ export default function EmployeesPage() {
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-2xl font-bold flex items-center gap-2" style={{ color: '#3d3229' }}>
-              <Users className="w-6 h-6" style={{ color: 'var(--teal)' }} /> {t('emp.title')}
+              <Users className="w-6 h-6" style={{ color: 'var(--copper)' }} /> {t('emp.title')}
             </h1>
             <p className="text-gray-500 text-sm mt-1">{employees.length} {t('emp.count')}</p>
           </div>
