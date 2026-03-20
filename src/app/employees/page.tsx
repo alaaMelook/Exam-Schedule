@@ -68,21 +68,54 @@ export default function EmployeesPage() {
     if (!file) return
     setImporting(true)
 
-    const buffer = await file.arrayBuffer()
-    const wb = XLSX.read(buffer)
-    const ws = wb.Sheets[wb.SheetNames[0]]
-    const rows = XLSX.utils.sheet_to_json<any>(ws)
+    try {
+      const buffer = await file.arrayBuffer()
+      const wb = XLSX.read(buffer)
+      const ws = wb.Sheets[wb.SheetNames[0]]
+      const rows = XLSX.utils.sheet_to_json<any>(ws)
 
-    const toInsert = rows.map(row => ({
-      name: String(row['الاسم'] || row['name'] || ''),
-      phone: String(row['رقم التليفون'] || row['phone'] || row['الرقم الوطني'] || row['national_id'] || ''),
-      department: String(row['القسم'] || row['department'] || ''),
-      role: String(row['الدور'] || row['role'] || 'ملاحظ'),
-    })).filter(r => r.name)
+      console.log('Excel headers (first row keys):', rows.length > 0 ? Object.keys(rows[0]) : 'NO ROWS')
+      console.log('Total rows parsed:', rows.length)
+      console.log('First 3 rows:', rows.slice(0, 3))
 
-    if (toInsert.length > 0) {
-      await supabase.from('employees').insert(toInsert)
+      const toInsert = rows.map(row => ({
+        name: String(row['الاسم'] || row['name'] || ''),
+        phone: String(row['رقم التليفون'] || row['phone'] || row['الرقم الوطني'] || row['national_id'] || ''),
+        department: String(row['القسم'] || row['department'] || ''),
+        role: String(row['الدور'] || row['role'] || 'ملاحظ'),
+      })).filter(r => r.name)
+
+      console.log('Rows to insert after filtering:', toInsert.length)
+      console.log('First 3 mapped rows:', toInsert.slice(0, 3))
+
+      if (toInsert.length === 0) {
+        alert('لم يتم العثور على بيانات صالحة في الملف.\n\nتأكد أن الملف يحتوي على عمود بعنوان "الاسم" أو "name".\n\nالأعمدة الموجودة: ' + (rows.length > 0 ? Object.keys(rows[0]).join(', ') : 'لا توجد صفوف'))
+        setImporting(false)
+        e.target.value = ''
+        return
+      }
+
+      // Insert in batches of 50 to avoid potential size limits
+      const batchSize = 50
+      let totalInserted = 0
+      for (let i = 0; i < toInsert.length; i += batchSize) {
+        const batch = toInsert.slice(i, i + batchSize)
+        const { error, data } = await supabase.from('employees').insert(batch).select()
+        if (error) {
+          console.error('Supabase insert error:', error)
+          alert('خطأ في استيراد الموظفين: ' + error.message)
+          break
+        }
+        totalInserted += (data?.length || batch.length)
+      }
+
       await fetchEmployees()
+      if (totalInserted > 0) {
+        alert(`تم استيراد ${totalInserted} موظف بنجاح!`)
+      }
+    } catch (err: any) {
+      console.error('Import error:', err)
+      alert('حدث خطأ أثناء قراءة الملف: ' + (err?.message || err))
     }
 
     setImporting(false)

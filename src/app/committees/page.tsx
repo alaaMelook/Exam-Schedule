@@ -138,10 +138,10 @@ export default function CommitteesPage() {
           <div className="space-y-6">
             {Object.entries(grouped).map(([date, comms]) => (
               <div key={date} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                <div className="bg-gradient-to-l from-purple-50 to-indigo-50 px-6 py-3 border-b border-purple-100 flex items-center gap-2">
-                  <Calendar className="w-4 h-4 text-purple-600" />
-                  <span className="font-bold text-purple-800">{getArabicDay(date)} — {formatDate(date)}</span>
-                  <span className="text-purple-500 text-sm mr-1">({comms.length} {t('com.committee')})</span>
+                <div className="px-6 py-3 border-b flex items-center gap-2" style={{ background: 'var(--copper-light)', borderColor: 'var(--beige-200)' }}>
+                  <Calendar className="w-4 h-4" style={{ color: 'var(--copper-dark)' }} />
+                  <span className="font-bold" style={{ color: 'var(--copper-dark)' }}>{getArabicDay(date)} — {formatDate(date)}</span>
+                  <span className="text-sm mr-1" style={{ color: 'var(--copper)' }}>({comms.length} {t('com.committee')})</span>
                 </div>
                 <table className="schedule-table">
                   <thead><tr>
@@ -159,7 +159,7 @@ export default function CommitteesPage() {
                         <td><span className="badge-backup">{c.backup_observers}</span></td>
                         <td>
                           <div className="flex items-center gap-2">
-                            <button onClick={() => openEdit(c)} className="text-purple-500 hover:text-purple-700 p-1"><Pencil className="w-4 h-4" /></button>
+                            <button onClick={() => openEdit(c)} className="p-1 transition-colors" style={{ color: 'var(--copper)' }} onMouseEnter={e => (e.currentTarget.style.color = 'var(--copper-dark)')} onMouseLeave={e => (e.currentTarget.style.color = 'var(--copper)')}><Pencil className="w-4 h-4" /></button>
                             <button onClick={() => handleDelete(c.id)} className="text-red-400 hover:text-red-600 p-1"><Trash2 className="w-4 h-4" /></button>
                           </div>
                         </td>

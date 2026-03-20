@@ -1,6 +1,6 @@
 'use client'
 import { useTranslation } from '@/lib/i18n'
-import { Heart, MessageCircle, Code2 } from 'lucide-react'
+import { MessageCircle, Code2 } from 'lucide-react'
 
 export default function Footer() {
   const { lang } = useTranslation()
@@ -13,9 +13,8 @@ export default function Footer() {
         <div className="flex items-center justify-center gap-2 flex-wrap">
           <Code2 className="w-4 h-4" style={{ color: 'var(--beige-400)' }} />
           <span className="text-sm" style={{ color: '#9a8b7c' }}>
-            {lang === 'ar' ? 'تطوير وتصميم' : 'Developed by'}
+            Developed & Designed by
           </span>
-          <Heart className="w-3 h-3 text-red-400 fill-red-400" />
           <span className="text-sm font-bold" style={{ color: '#5a4d40' }}>Eng. Alaa Molouk</span>
           <span style={{ color: 'var(--beige-300)' }}>|</span>
           <a

@@ -4,7 +4,7 @@ import { supabase, Employee, Committee, Assignment } from '@/lib/supabase'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import EmployeeScheduleCard from '@/components/EmployeeScheduleCard'
-import { Plus, Calendar, X, Check, Download, Users, Search, Trash2, Wand2, AlertTriangle, RotateCcw, Shuffle } from 'lucide-react'
+import { Plus, Calendar, X, Check, Download, Users, Search, Trash2, Wand2, AlertTriangle, RotateCcw, Shuffle, FileText } from 'lucide-react'
 import { getArabicDay, formatDate } from '@/lib/utils'
 import { autoDistribute, DistributionMode } from '@/lib/distribute'
 import { useTranslation } from '@/lib/i18n'
@@ -98,6 +98,16 @@ export default function AssignmentsPage() {
     await exportAllScheduleExcel(employees, map)
   }
 
+  async function handleExportAllDocx() {
+    if (assignments.length === 0) return
+    const { exportAllDocx } = await import('@/lib/export')
+    const map = new Map<string, ScheduleRow[]>()
+    employees.forEach(e => {
+      map.set(e.id, assignments.filter(a => a.employee_id === e.id).map(a => ({ ...a, committees: a.committees })) as ScheduleRow[])
+    })
+    await exportAllDocx(employees, map)
+  }
+
   const filteredEmployees = employees.filter(e => e.name.includes(searchEmp) || (e.department || '').includes(searchEmp))
 
   const byDateGroups = committees.reduce((acc, c) => {
@@ -117,6 +127,7 @@ export default function AssignmentsPage() {
           </h1>
           <div className="flex items-center gap-2 flex-wrap no-print">
             <button onClick={handleExportAll} className="btn-secondary"><Download className="w-4 h-4" /> {t('asg.export')}</button>
+            <button onClick={handleExportAllDocx} className="btn-secondary"><FileText className="w-4 h-4" /> تصدير Doc</button>
             <button onClick={() => { setAutoWarnings([]); setShowAutoModal(true) }}
               className="flex items-center gap-2 text-white font-semibold py-2.5 px-5 rounded-xl transition-all text-sm" style={{ background: 'linear-gradient(135deg, var(--plum), var(--plum-dark))' }}>
               <Wand2 className="w-4 h-4" /> {t('asg.auto')}
@@ -171,10 +182,10 @@ export default function AssignmentsPage() {
           <div className="space-y-6">
             {Object.entries(byDateGroups).sort(([a], [b]) => a.localeCompare(b)).map(([date, groups]) => (
               <div key={date} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                <div className="bg-gradient-to-l from-indigo-600 to-purple-600 px-6 py-3 flex items-center gap-2">
+                <div className="px-6 py-3 flex items-center gap-2 rounded-t-2xl" style={{ background: 'linear-gradient(135deg, var(--copper), var(--copper-dark))' }}>
                   <Calendar className="w-4 h-4 text-white" />
                   <span className="font-bold text-white">{getArabicDay(date)} — {formatDate(date)}</span>
-                  <span className="text-purple-200 text-sm mr-1">({groups.length} {t('com.committee')})</span>
+                  <span className="text-white/70 text-sm mr-1">({groups.length} {t('com.committee')})</span>
                 </div>
                 {groups.map(({ committee, comAssignments }) => (
                   <div key={committee.id} className="border-b border-gray-100 last:border-0">

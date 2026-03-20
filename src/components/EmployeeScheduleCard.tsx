@@ -2,7 +2,7 @@
 import { useState } from 'react'
 import { Employee, Committee, Assignment } from '@/lib/supabase'
 import { getArabicDay, formatDate } from '@/lib/utils'
-import { FileDown, FileSpreadsheet, User } from 'lucide-react'
+import { FileSpreadsheet, FileText, User } from 'lucide-react'
 import { useTranslation } from '@/lib/i18n'
 
 type ScheduleRow = Assignment & { committees: Committee }
@@ -16,17 +16,19 @@ export default function EmployeeScheduleCard({ employee, rows }: Props) {
   const { t } = useTranslation()
   const [exporting, setExporting] = useState(false)
 
-  async function handleExportPDF() {
-    setExporting(true)
-    const { exportEmployeePDF } = await import('@/lib/export')
-    await exportEmployeePDF(employee, rows)
-    setExporting(false)
-  }
+
 
   async function handleExportExcel() {
     setExporting(true)
     const { exportEmployeeExcel } = await import('@/lib/export')
     await exportEmployeeExcel(employee, rows)
+    setExporting(false)
+  }
+
+  async function handleExportDocx() {
+    setExporting(true)
+    const { exportEmployeeDocx } = await import('@/lib/export')
+    await exportEmployeeDocx(employee, rows)
     setExporting(false)
   }
 
@@ -57,13 +59,13 @@ export default function EmployeeScheduleCard({ employee, rows }: Props) {
           </div>
         </div>
         <div className="flex items-center gap-2 no-print">
-          <button onClick={handleExportPDF} disabled={exporting || rows.length === 0}
-            className="flex items-center gap-1.5 bg-white/20 hover:bg-white/30 text-white text-xs font-medium px-3 py-2 rounded-xl transition-all">
-            <FileDown className="w-3.5 h-3.5" /> PDF
-          </button>
           <button onClick={handleExportExcel} disabled={exporting || rows.length === 0}
             className="flex items-center gap-1.5 bg-white/20 hover:bg-white/30 text-white text-xs font-medium px-3 py-2 rounded-xl transition-all">
             <FileSpreadsheet className="w-3.5 h-3.5" /> Excel
+          </button>
+          <button onClick={handleExportDocx} disabled={exporting || rows.length === 0}
+            className="flex items-center gap-1.5 bg-white/20 hover:bg-white/30 text-white text-xs font-medium px-3 py-2 rounded-xl transition-all">
+            <FileText className="w-3.5 h-3.5" /> Doc
           </button>
         </div>
       </div>
