@@ -10,7 +10,7 @@
 
 > A comprehensive web system for managing and automatically distributing observers to examination committees at Damanhour National University (DNU).
 
-🔗 **[exam-schedule-phi.vercel.app](https://exam-schedule-phi.vercel.app)**
+🔗 **[exam-schedule-theta.vercel.app](https://exam-schedule-theta.vercel.app/)**
 
 ---
 
