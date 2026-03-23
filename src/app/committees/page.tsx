@@ -96,23 +96,33 @@ export default function CommitteesPage() {
     const file = e.target.files?.[0]
     if (!file) return
     setImporting(true)
-    const buffer = await file.arrayBuffer()
-    const wb = XLSX.read(buffer)
-    const ws = wb.Sheets[wb.SheetNames[0]]
-    const rows = XLSX.utils.sheet_to_json<any>(ws)
-    const toInsert = rows.map(row => ({
-      name: String(row['اسم اللجنة'] || row['name'] || ''),
-      college: String(row['الكلية'] || row['college'] || ''),
-      location: String(row['المكان'] || row['location'] || ''),
-      exam_date: String(row['التاريخ'] || row['exam_date'] || ''),
-      start_time: String(row['وقت البداية'] || row['start_time'] || '10:00'),
-      end_time: String(row['وقت النهاية'] || row['end_time'] || '12:00'),
-      main_observers: Number(row['أساسي'] || row['main_observers'] || 2),
-      backup_observers: Number(row['احتياطي'] || row['backup_observers'] || 1),
-    })).filter(r => r.name && r.college && r.exam_date)
-    if (toInsert.length > 0) {
-      await supabase.from('committees').insert(toInsert)
-      await fetchCommittees()
+    try {
+      const buffer = await file.arrayBuffer()
+      const wb = XLSX.read(buffer)
+      const ws = wb.Sheets[wb.SheetNames[0]]
+      const rows = XLSX.utils.sheet_to_json<any>(ws)
+      const toInsert = rows.map(row => ({
+        name: String(row['اسم اللجنة'] || row['name'] || ''),
+        college: String(row['الكلية'] || row['college'] || ''),
+        location: String(row['المكان'] || row['location'] || ''),
+        exam_date: String(row['تاريخ الامتحان *'] || row['تاريخ الامتحان'] || row['التاريخ'] || row['exam_date'] || ''),
+        start_time: String(row['وقت البداية'] || row['start_time'] || '10:00'),
+        end_time: String(row['وقت النهاية'] || row['end_time'] || '12:00'),
+        main_observers: Number(row['أساسي'] || row['main_observers'] || 2),
+        backup_observers: Number(row['احتياطي'] || row['backup_observers'] || 0),
+      })).filter(r => r.name && r.college && r.exam_date)
+      if (toInsert.length > 0) {
+        const { error } = await supabase.from('committees').insert(toInsert)
+        if (error) {
+          alert('حدث خطأ أثناء الاستيراد: ' + error.message)
+        } else {
+          await fetchCommittees()
+        }
+      } else {
+        alert('لم يتم العثور على بيانات صالحة في الملف')
+      }
+    } catch (err: any) {
+      alert('حدث خطأ أثناء قراءة الملف: ' + (err?.message || err))
     }
     setImporting(false)
     e.target.value = ''
