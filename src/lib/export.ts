@@ -1,5 +1,5 @@
 import { Employee, Committee, Assignment } from './supabase'
-import { getArabicDay, formatDate } from './utils'
+import { getArabicDay, formatDate, formatTime } from './utils'
 
 type ScheduleRow = Assignment & { committees: Committee }
 
@@ -44,7 +44,7 @@ export async function exportEmployeePDF(employee: Employee, rows: ScheduleRow[])
   const tableData = rows.map((r, i) => [
     i + 1,
     r.type === 'أساسي' ? 'Main' : 'Backup',
-    `${r.committees.start_time.slice(0,5)}-${r.committees.end_time.slice(0,5)}`,
+    `${formatTime(r.committees.start_time)}-${formatTime(r.committees.end_time)}`,
     r.committees.location || '',
     r.committees.college,
     r.committees.name,
@@ -85,7 +85,7 @@ export async function exportEmployeeExcel(employee: Employee, rows: ScheduleRow[
       r.committees.name,
       r.committees.college,
       r.committees.location || '',
-      `${r.committees.start_time.slice(0,5)} - ${r.committees.end_time.slice(0,5)}`,
+      `${formatTime(r.committees.start_time)} - ${formatTime(r.committees.end_time)}`,
       r.type,
     ])
   ]
@@ -139,7 +139,7 @@ export async function exportAllScheduleExcel(
         r.committees.name,
         r.committees.college,
         r.committees.location || '',
-        `${r.committees.start_time.slice(0,5)} - ${r.committees.end_time.slice(0,5)}`,
+        `${formatTime(r.committees.start_time)} - ${formatTime(r.committees.end_time)}`,
         r.type,
       ])
     ]
@@ -215,8 +215,8 @@ async function buildDocxSection(employee: Employee, rows: ScheduleRow[], docxLib
     new TableRow({
       children: [
         cell(`${r.committees.name} - ${r.committees.college}`, 0),
-        cell(r.type, 1),
-        cell(`${r.committees.start_time.slice(0, 5)} - ${r.committees.end_time.slice(0, 5)}`, 2),
+        cell(r.committees.college.replace(/كلية\s*/g, '').trim(), 1),
+        cell(`${formatTime(r.committees.start_time)} - ${formatTime(r.committees.end_time)}`, 2),
         cell(formatDate(r.committees.exam_date), 3),
         cell(getArabicDay(r.committees.exam_date), 4),
         cell(String(i + 1), 5),

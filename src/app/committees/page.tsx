@@ -1,10 +1,10 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { supabase, Committee } from '@/lib/supabase'
+import { supabase, Committee, getTimeSettings, saveTimeSettings, TimeSettings } from '@/lib/supabase'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
-import { Plus, Building2, Pencil, Trash2, X, Check, Calendar, Upload, Download } from 'lucide-react'
-import { getArabicDay, formatDate } from '@/lib/utils'
+import { Plus, Building2, Pencil, Trash2, X, Check, Calendar, Upload, Download, Settings, Save } from 'lucide-react'
+import { getArabicDay, formatDate, formatTime } from '@/lib/utils'
 import * as XLSX from 'xlsx'
 import { useTranslation } from '@/lib/i18n'
 
@@ -16,6 +16,13 @@ export default function CommitteesPage() {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [importing, setImporting] = useState(false)
+  const [showSettings, setShowSettings] = useState(false)
+  const [settingsSaved, setSettingsSaved] = useState(false)
+  const [savingSettings, setSavingSettings] = useState(false)
+  const [timeSettings, setTimeSettings] = useState<TimeSettings>({
+    morning: { start: '08:00', end: '14:00' },
+    evening: { start: '14:00', end: '22:00' },
+  })
   const [form, setForm] = useState({
     name: '', college: '', location: '',
     exam_date: '', start_time: '10:00', end_time: '12:00',
@@ -25,10 +32,25 @@ export default function CommitteesPage() {
   async function fetchCommittees() {
     const { data } = await supabase.from('committees').select('*').order('exam_date').order('start_time')
     setCommittees(data || [])
+    const ts = await getTimeSettings()
+    setTimeSettings(ts)
     setLoading(false)
   }
 
   useEffect(() => { fetchCommittees() }, [])
+
+  // Classify a committee's period based on time settings
+  function getCommitteePeriod(startTime: string): 'صباحي' | 'مسائي' | null {
+    const t5 = startTime.slice(0, 5)
+    if (t5 >= timeSettings.morning.start && t5 < timeSettings.morning.end) return 'صباحي'
+    if (t5 >= timeSettings.evening.start && t5 < timeSettings.evening.end) return 'مسائي'
+    return null
+  }
+
+  // Check if time ranges overlap
+  function hasOverlap(): boolean {
+    return timeSettings.morning.end > timeSettings.evening.start
+  }
 
   function openAdd() {
     setForm({ name: '', college: '', location: '', exam_date: '', start_time: '10:00', end_time: '12:00', main_observers: 2, backup_observers: 1 })
@@ -61,6 +83,15 @@ export default function CommitteesPage() {
     await fetchCommittees()
   }
 
+  async function handleSaveSettings() {
+    if (hasOverlap()) return
+    setSavingSettings(true)
+    await saveTimeSettings(timeSettings)
+    setSettingsSaved(true)
+    setSavingSettings(false)
+    setTimeout(() => setSettingsSaved(false), 2000)
+  }
+
   async function handleImportExcel(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
@@ -89,8 +120,11 @@ export default function CommitteesPage() {
 
   function handleExportExcel() {
     const data = [
-      [t('com.col.name'), t('com.col.college'), t('com.col.location'), t('com.modal.date'), t('com.modal.start'), t('com.modal.end'), t('com.col.main'), t('com.col.backup')],
-      ...committees.map(c => [c.name, c.college, c.location || '', c.exam_date, c.start_time, c.end_time, c.main_observers, c.backup_observers])
+      [t('com.col.name'), t('com.col.college'), t('com.col.location'), t('com.modal.date'), t('com.modal.start'), t('com.modal.end'), t('com.col.main'), t('com.col.period')],
+      ...committees.map(c => {
+        const period = getCommitteePeriod(c.start_time)
+        return [c.name, c.college, c.location || '', c.exam_date, c.start_time, c.end_time, c.main_observers, period === 'صباحي' ? 'صباحي' : period === 'مسائي' ? 'مسائي' : '-']
+      })
     ]
     const ws = XLSX.utils.aoa_to_sheet(data)
     ws['!cols'] = [{ wch: 20 }, { wch: 18 }, { wch: 15 }, { wch: 14 }, { wch: 12 }, { wch: 12 }, { wch: 10 }, { wch: 10 }]
@@ -106,6 +140,13 @@ export default function CommitteesPage() {
     return acc
   }, {} as Record<string, Committee[]>)
 
+  function getPeriodBadge(startTime: string) {
+    const period = getCommitteePeriod(startTime)
+    if (period === 'صباحي') return <span className="text-xs font-medium px-2 py-1 rounded-full bg-sky-100 text-sky-700">{t('com.period.morning')}</span>
+    if (period === 'مسائي') return <span className="text-xs font-medium px-2 py-1 rounded-full bg-purple-100 text-purple-700">{t('com.period.evening')}</span>
+    return <span className="text-xs font-medium px-2 py-1 rounded-full bg-gray-100 text-gray-500">{t('com.period.unknown')}</span>
+  }
+
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
@@ -118,6 +159,9 @@ export default function CommitteesPage() {
             <p className="text-gray-500 text-sm mt-1">{committees.length} {t('com.count')}</p>
           </div>
           <div className="flex items-center gap-2">
+            <button onClick={() => setShowSettings(!showSettings)} className="btn-secondary">
+              <Settings className="w-4 h-4" /> {t('com.settings.title')}
+            </button>
             <button onClick={handleExportExcel} className="btn-secondary" disabled={committees.length === 0}>
               <Download className="w-4 h-4" /> {t('com.export')}
             </button>
@@ -131,6 +175,67 @@ export default function CommitteesPage() {
             </button>
           </div>
         </div>
+
+        {/* ─── Time Settings Panel ─── */}
+        {showSettings && (
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6 transition-all">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-bold text-gray-800">{t('com.settings.title')}</h3>
+              <button
+                onClick={handleSaveSettings}
+                disabled={savingSettings || hasOverlap()}
+                className="flex items-center gap-2 text-sm font-semibold py-2 px-4 rounded-xl text-white transition-all"
+                style={{ background: settingsSaved ? '#10b981' : hasOverlap() ? '#d1d5db' : 'linear-gradient(135deg, var(--plum), var(--plum-dark))' }}
+              >
+                {settingsSaved ? <Check className="w-4 h-4" /> : <Save className="w-4 h-4" />}
+                {settingsSaved ? t('com.settings.saved') : savingSettings ? '...' : t('com.settings.save')}
+              </button>
+            </div>
+            <div className="grid grid-cols-2 gap-6">
+              {/* Morning */}
+              <div className="p-4 rounded-xl border-2 border-sky-200 bg-sky-50/50">
+                <div className="text-sm font-semibold text-sky-700 mb-3">☀️ {t('com.settings.morning')}</div>
+                <div className="flex items-center gap-3">
+                  <div className="flex-1">
+                    <label className="block text-xs text-sky-600 mb-1">{t('com.settings.from')}</label>
+                    <input type="time" value={timeSettings.morning.start}
+                      onChange={e => setTimeSettings({ ...timeSettings, morning: { ...timeSettings.morning, start: e.target.value } })}
+                      className="input-field w-full text-center text-sm" />
+                  </div>
+                  <div className="flex-1">
+                    <label className="block text-xs text-sky-600 mb-1">{t('com.settings.to')}</label>
+                    <input type="time" value={timeSettings.morning.end}
+                      onChange={e => setTimeSettings({ ...timeSettings, morning: { ...timeSettings.morning, end: e.target.value } })}
+                      className="input-field w-full text-center text-sm" />
+                  </div>
+                </div>
+              </div>
+              {/* Evening */}
+              <div className="p-4 rounded-xl border-2 border-purple-200 bg-purple-50/50">
+                <div className="text-sm font-semibold text-purple-700 mb-3">🌙 {t('com.settings.evening')}</div>
+                <div className="flex items-center gap-3">
+                  <div className="flex-1">
+                    <label className="block text-xs text-purple-600 mb-1">{t('com.settings.from')}</label>
+                    <input type="time" value={timeSettings.evening.start}
+                      onChange={e => setTimeSettings({ ...timeSettings, evening: { ...timeSettings.evening, start: e.target.value } })}
+                      className="input-field w-full text-center text-sm" />
+                  </div>
+                  <div className="flex-1">
+                    <label className="block text-xs text-purple-600 mb-1">{t('com.settings.to')}</label>
+                    <input type="time" value={timeSettings.evening.end}
+                      onChange={e => setTimeSettings({ ...timeSettings, evening: { ...timeSettings.evening, end: e.target.value } })}
+                      className="input-field w-full text-center text-sm" />
+                  </div>
+                </div>
+              </div>
+            </div>
+            {hasOverlap() && (
+              <div className="mt-3 text-sm text-red-600 font-medium bg-red-50 rounded-xl px-4 py-2">
+                {t('com.settings.overlap')}
+              </div>
+            )}
+          </div>
+        )}
 
         {loading ? (
           <div className="bg-white rounded-2xl p-12 text-center text-gray-400">{t('com.loading')}</div>
@@ -146,7 +251,7 @@ export default function CommitteesPage() {
                 <table className="schedule-table">
                   <thead><tr>
                     <th>{t('com.col.name')}</th><th>{t('com.col.college')}</th><th>{t('com.col.location')}</th>
-                    <th>{t('com.col.time')}</th><th>{t('com.col.main')}</th><th>{t('com.col.backup')}</th><th>{t('com.col.actions')}</th>
+                    <th>{t('com.col.time')}</th><th>{t('com.col.period')}</th><th>{t('com.col.main')}</th><th>{t('com.col.actions')}</th>
                   </tr></thead>
                   <tbody>
                     {comms.map(c => (
@@ -154,9 +259,9 @@ export default function CommitteesPage() {
                         <td className="font-semibold text-gray-800">{c.name}</td>
                         <td className="text-gray-600">{c.college}</td>
                         <td className="text-gray-500 text-sm">{c.location || '-'}</td>
-                        <td className="text-gray-600 text-sm">{c.start_time.slice(0,5)} - {c.end_time.slice(0,5)}</td>
+                        <td className="text-gray-600 text-sm">{formatTime(c.start_time)} - {formatTime(c.end_time)}</td>
+                        <td>{getPeriodBadge(c.start_time)}</td>
                         <td><span className="badge-main">{c.main_observers}</span></td>
-                        <td><span className="badge-backup">{c.backup_observers}</span></td>
                         <td>
                           <div className="flex items-center gap-2">
                             <button onClick={() => openEdit(c)} className="p-1 transition-colors" style={{ color: 'var(--copper)' }} onMouseEnter={e => (e.currentTarget.style.color = 'var(--copper-dark)')} onMouseLeave={e => (e.currentTarget.style.color = 'var(--copper)')}><Pencil className="w-4 h-4" /></button>
@@ -212,9 +317,13 @@ export default function CommitteesPage() {
                   <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('com.modal.main')}</label>
                   <input type="number" min={1} max={10} value={form.main_observers} onChange={e => setForm({...form, main_observers: parseInt(e.target.value)})} className="input-field" />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('com.modal.backup')}</label>
-                  <input type="number" min={0} max={10} value={form.backup_observers} onChange={e => setForm({...form, backup_observers: parseInt(e.target.value)})} className="input-field" />
+                {/* Period auto-classification preview */}
+                <div className="flex items-end pb-1">
+                  {form.start_time && (
+                    <div className="text-sm">
+                      {t('com.col.period')}: {getPeriodBadge(form.start_time)}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

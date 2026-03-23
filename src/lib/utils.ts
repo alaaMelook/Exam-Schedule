@@ -23,8 +23,13 @@ export function formatDate(dateStr: string): string {
 }
 
 export function formatTime(timeStr: string): string {
-  // Convert "10:00:00" -> "10"
-  return timeStr.slice(0, 5).replace(':00', '')
+  const [hStr, mStr] = timeStr.slice(0, 5).split(':')
+  let h = parseInt(hStr, 10)
+  const m = mStr || '00'
+  const ampm = h >= 12 ? 'PM' : 'AM'
+  if (h === 0) h = 12
+  else if (h > 12) h -= 12
+  return `${h}:${m} ${ampm}`
 }
 
 export function formatTimeRange(start: string, end: string): string {

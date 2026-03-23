@@ -39,7 +39,51 @@ export interface Assignment {
   committees?: Committee
 }
 
+export interface ReserveAssignment {
+  id: string
+  employee_id: string
+  exam_date: string
+  scope: 'صباحي' | 'مسائي' | 'يوم كامل'
+  status?: string
+  created_at?: string
+  employees?: Employee
+}
+
 export interface EmployeeScheduleRow {
   employee: Employee
   assignments: (Assignment & { committee: Committee })[]
+}
+
+// ─── Time Range Settings ───
+export interface TimeRange {
+  start: string  // HH:MM
+  end: string    // HH:MM
+}
+
+export interface TimeSettings {
+  morning: TimeRange
+  evening: TimeRange
+}
+
+const DEFAULT_TIME_SETTINGS: TimeSettings = {
+  morning: { start: '08:00', end: '14:00' },
+  evening: { start: '14:00', end: '22:00' },
+}
+
+export async function getTimeSettings(): Promise<TimeSettings> {
+  const { data } = await supabase.from('settings').select('*').in('key', ['morning_range', 'evening_range'])
+  if (!data || data.length === 0) return DEFAULT_TIME_SETTINGS
+  const morning = data.find(d => d.key === 'morning_range')?.value as TimeRange | undefined
+  const evening = data.find(d => d.key === 'evening_range')?.value as TimeRange | undefined
+  return {
+    morning: morning || DEFAULT_TIME_SETTINGS.morning,
+    evening: evening || DEFAULT_TIME_SETTINGS.evening,
+  }
+}
+
+export async function saveTimeSettings(settings: TimeSettings): Promise<void> {
+  await supabase.from('settings').upsert([
+    { key: 'morning_range', value: settings.morning },
+    { key: 'evening_range', value: settings.evening },
+  ])
 }
