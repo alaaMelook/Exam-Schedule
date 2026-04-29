@@ -133,3 +133,65 @@ function buildDateString(year: number, month: number, day: number): string | nul
   if (month < 1 || month > 12 || day < 1 || day > 31) return null
   return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`
 }
+
+/**
+ * Parse a time value from an Excel cell into HH:MM format.
+ * Handles:
+ *  - Excel serial time fractions (e.g. 0.458333 → "11:00", 0.75 → "18:00")
+ *  - HH:MM or HH:MM:SS strings already in correct format
+ *  - Date objects with time component
+ *  - Numeric strings representing serial fractions
+ *  - null/undefined → returns the provided fallback
+ */
+export function parseExcelTime(value: any, fallback: string = '10:00'): string {
+  if (value === null || value === undefined || value === '') return fallback
+
+  // Handle JS Date objects (xlsx library may return these)
+  if (value instanceof Date) {
+    if (isNaN(value.getTime())) return fallback
+    const h = String(value.getHours()).padStart(2, '0')
+    const m = String(value.getMinutes()).padStart(2, '0')
+    return `${h}:${m}`
+  }
+
+  // Handle numbers — Excel stores time as a fraction of 24 hours
+  if (typeof value === 'number' && isFinite(value)) {
+    return excelSerialToTime(value)
+  }
+
+  const str = String(value).trim()
+
+  // If it's already in HH:MM or HH:MM:SS format, return as-is (first 5 chars)
+  if (/^\d{1,2}:\d{2}(:\d{2})?$/.test(str)) {
+    const parts = str.split(':')
+    const h = String(parseInt(parts[0], 10)).padStart(2, '0')
+    const m = parts[1].padStart(2, '0')
+    return `${h}:${m}`
+  }
+
+  // If it's a numeric string (decimal fraction), parse as Excel serial time
+  const num = parseFloat(str)
+  if (!isNaN(num) && isFinite(num)) {
+    return excelSerialToTime(num)
+  }
+
+  // Fallback: try to extract time from a date-time string
+  const dateAttempt = new Date(str)
+  if (!isNaN(dateAttempt.getTime())) {
+    const h = String(dateAttempt.getHours()).padStart(2, '0')
+    const m = String(dateAttempt.getMinutes()).padStart(2, '0')
+    return `${h}:${m}`
+  }
+
+  return fallback
+}
+
+/** Convert an Excel serial time fraction to HH:MM string */
+function excelSerialToTime(serial: number): string {
+  // For date+time serials (e.g. 46175.458333), extract only the fractional part
+  const fraction = serial % 1
+  const totalMinutes = Math.round(fraction * 24 * 60)
+  const hours = Math.floor(totalMinutes / 60) % 24
+  const minutes = totalMinutes % 60
+  return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`
+}

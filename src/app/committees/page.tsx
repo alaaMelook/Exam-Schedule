@@ -4,7 +4,7 @@ import { supabase, Committee, getTimeSettings, saveTimeSettings, TimeSettings } 
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import { Plus, Building2, Pencil, Trash2, X, Check, Calendar, Upload, Download, Settings, Save } from 'lucide-react'
-import { getArabicDay, formatDate, formatTime, parseExcelDate } from '@/lib/utils'
+import { getArabicDay, formatDate, formatTime, parseExcelDate, parseExcelTime } from '@/lib/utils'
 import * as XLSX from 'xlsx'
 import { useTranslation } from '@/lib/i18n'
 
@@ -109,8 +109,8 @@ export default function CommitteesPage() {
           college: String(row['الكلية'] || row['college'] || ''),
           location: String(row['المكان'] || row['location'] || ''),
           exam_date: parsedDate,
-          start_time: String(row['وقت البداية'] || row['start_time'] || '10:00'),
-          end_time: String(row['وقت النهاية'] || row['end_time'] || '12:00'),
+          start_time: parseExcelTime(row['وقت البداية'] ?? row['start_time'], '10:00'),
+          end_time: parseExcelTime(row['وقت النهاية'] ?? row['end_time'], '12:00'),
           main_observers: Number(row['أساسي'] || row['main_observers'] || 2),
           backup_observers: Number(row['احتياطي'] || row['backup_observers'] || 0),
         }
