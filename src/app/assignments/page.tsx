@@ -210,7 +210,15 @@ export default function AssignmentsPage() {
         .map(r => r.employee_id)
     )
 
-    return employees.filter(e => !assignedIds.has(e.id) && !alreadyReservedIds.has(e.id))
+    return employees.filter(e => {
+      if (assignedIds.has(e.id) || alreadyReservedIds.has(e.id)) return false
+      // Check availability days
+      if (e.available_days && e.available_days.length > 0) {
+        const dayName = new Date(selectedDate + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long' })
+        if (!e.available_days.includes(dayName)) return false
+      }
+      return true
+    })
   })()
 
   const byDateGroups = committees.reduce((acc, c) => {
@@ -444,7 +452,14 @@ export default function AssignmentsPage() {
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('asg.modal.employee')}</label>
                 <select value={form.employee_id} onChange={e => setForm({ ...form, employee_id: e.target.value })} className="input-field">
                   <option value="">{t('asg.modal.employee.placeholder')}</option>
-                  {employees.map(e => <option key={e.id} value={e.id}>{e.name}</option>)}
+                  {employees.filter(e => {
+                    if (!form.committee_id) return true
+                    const committee = committees.find(c => c.id === form.committee_id)
+                    if (!committee) return true
+                    if (!e.available_days || e.available_days.length === 0) return true
+                    const dayName = new Date(committee.exam_date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long' })
+                    return e.available_days.includes(dayName)
+                  }).map(e => <option key={e.id} value={e.id}>{e.name}</option>)}
                 </select>
               </div>
               <div>

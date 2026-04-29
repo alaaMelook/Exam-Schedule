@@ -51,6 +51,10 @@ const translations = {
   'emp.modal.department.placeholder': { ar: 'مثال: كلية العلوم', en: 'e.g. Faculty of Science' },
   'emp.modal.role': { ar: 'الدور', en: 'Role' },
   'emp.delete.confirm': { ar: 'هل تريد حذف هذا الموظف؟', en: 'Delete this employee?' },
+  'emp.col.availability': { ar: 'أيام التواجد', en: 'Availability' },
+  'emp.modal.availability': { ar: 'أيام التواجد (اختياري)', en: 'Available Days (Optional)' },
+  'emp.availability.all': { ar: 'كل الأيام', en: 'All Days' },
+  'emp.availability.hint': { ar: 'اتركها فارغة ليكون متاح كل الأيام', en: 'Leave empty for all days' },
 
   // ─── Roles ───
   'role.observer': { ar: 'ملاحظ', en: 'Observer' },

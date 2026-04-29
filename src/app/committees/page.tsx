@@ -4,7 +4,7 @@ import { supabase, Committee, getTimeSettings, saveTimeSettings, TimeSettings } 
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import { Plus, Building2, Pencil, Trash2, X, Check, Calendar, Upload, Download, Settings, Save } from 'lucide-react'
-import { getArabicDay, formatDate, formatTime } from '@/lib/utils'
+import { getArabicDay, formatDate, formatTime, parseExcelDate } from '@/lib/utils'
 import * as XLSX from 'xlsx'
 import { useTranslation } from '@/lib/i18n'
 
@@ -101,16 +101,20 @@ export default function CommitteesPage() {
       const wb = XLSX.read(buffer)
       const ws = wb.Sheets[wb.SheetNames[0]]
       const rows = XLSX.utils.sheet_to_json<any>(ws)
-      const toInsert = rows.map(row => ({
-        name: String(row['اسم اللجنة'] || row['name'] || ''),
-        college: String(row['الكلية'] || row['college'] || ''),
-        location: String(row['المكان'] || row['location'] || ''),
-        exam_date: String(row['تاريخ الامتحان *'] || row['تاريخ الامتحان'] || row['التاريخ'] || row['exam_date'] || ''),
-        start_time: String(row['وقت البداية'] || row['start_time'] || '10:00'),
-        end_time: String(row['وقت النهاية'] || row['end_time'] || '12:00'),
-        main_observers: Number(row['أساسي'] || row['main_observers'] || 2),
-        backup_observers: Number(row['احتياطي'] || row['backup_observers'] || 0),
-      })).filter(r => r.name && r.college && r.exam_date)
+      const toInsert = rows.map(row => {
+        const rawDate = row['تاريخ الامتحان *'] ?? row['تاريخ الامتحان'] ?? row['التاريخ'] ?? row['exam_date'] ?? null
+        const parsedDate = parseExcelDate(rawDate)
+        return {
+          name: String(row['اسم اللجنة'] || row['name'] || ''),
+          college: String(row['الكلية'] || row['college'] || ''),
+          location: String(row['المكان'] || row['location'] || ''),
+          exam_date: parsedDate,
+          start_time: String(row['وقت البداية'] || row['start_time'] || '10:00'),
+          end_time: String(row['وقت النهاية'] || row['end_time'] || '12:00'),
+          main_observers: Number(row['أساسي'] || row['main_observers'] || 2),
+          backup_observers: Number(row['احتياطي'] || row['backup_observers'] || 0),
+        }
+      }).filter(r => r.name && r.college && r.exam_date)
       if (toInsert.length > 0) {
         const { error } = await supabase.from('committees').insert(toInsert)
         if (error) {

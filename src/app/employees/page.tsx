@@ -7,6 +7,12 @@ import { Plus, Search, Pencil, Trash2, X, Check, Users, Upload, Download } from 
 import * as XLSX from 'xlsx'
 import { useTranslation } from '@/lib/i18n'
 
+const ALL_DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Saturday'] as const
+const arabicDayAbbr: Record<string, string> = {
+  Sunday: 'أحد', Monday: 'اثنين', Tuesday: 'ثلاثاء',
+  Wednesday: 'أربعاء', Thursday: 'خميس', Saturday: 'سبت',
+}
+
 export default function EmployeesPage() {
   const { t } = useTranslation()
   const [employees, setEmployees] = useState<Employee[]>([])
@@ -14,7 +20,7 @@ export default function EmployeesPage() {
   const [search, setSearch] = useState('')
   const [showModal, setShowModal] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
-  const [form, setForm] = useState({ name: '', phone: '', department: '', role: 'ملاحظ' })
+  const [form, setForm] = useState({ name: '', phone: '', department: '', role: 'ملاحظ', available_days: null as string[] | null })
   const [saving, setSaving] = useState(false)
   const [importing, setImporting] = useState(false)
 
@@ -33,24 +39,43 @@ export default function EmployeesPage() {
   )
 
   function openAdd() {
-    setForm({ name: '', phone: '', department: '', role: 'ملاحظ' })
+    setForm({ name: '', phone: '', department: '', role: 'ملاحظ', available_days: null })
     setEditingId(null)
     setShowModal(true)
   }
 
   function openEdit(emp: Employee) {
-    setForm({ name: emp.name, phone: emp.phone || '', department: emp.department || '', role: emp.role || 'ملاحظ' })
+    setForm({ name: emp.name, phone: emp.phone || '', department: emp.department || '', role: emp.role || 'ملاحظ', available_days: emp.available_days || null })
     setEditingId(emp.id)
     setShowModal(true)
+  }
+
+  function toggleDay(day: string) {
+    setForm(prev => {
+      const current = prev.available_days || []
+      if (current.includes(day)) {
+        const updated = current.filter(d => d !== day)
+        return { ...prev, available_days: updated.length === 0 ? null : updated }
+      } else {
+        return { ...prev, available_days: [...current, day] }
+      }
+    })
   }
 
   async function handleSave() {
     if (!form.name.trim()) return
     setSaving(true)
+    const payload = {
+      name: form.name,
+      phone: form.phone,
+      department: form.department,
+      role: form.role,
+      available_days: form.available_days && form.available_days.length > 0 ? form.available_days : null,
+    }
     if (editingId) {
-      await supabase.from('employees').update(form).eq('id', editingId)
+      await supabase.from('employees').update(payload).eq('id', editingId)
     } else {
-      await supabase.from('employees').insert(form)
+      await supabase.from('employees').insert(payload)
     }
     await fetchEmployees()
     setSaving(false)
@@ -195,6 +220,7 @@ export default function EmployeesPage() {
                   <th>{t('emp.col.phone')}</th>
                   <th>{t('emp.col.department')}</th>
                   <th>{t('emp.col.role')}</th>
+                  <th>{t('emp.col.availability')}</th>
                   <th>{t('emp.col.actions')}</th>
                 </tr>
               </thead>
@@ -209,6 +235,19 @@ export default function EmployeesPage() {
                       <span className="bg-blue-50 text-blue-700 text-xs font-medium px-2 py-1 rounded-full">
                         {emp.role || 'ملاحظ'}
                       </span>
+                    </td>
+                    <td>
+                      {(!emp.available_days || emp.available_days.length === 0) ? (
+                        <span className="text-xs text-gray-400">{t('emp.availability.all')}</span>
+                      ) : (
+                        <div className="flex flex-wrap gap-1">
+                          {emp.available_days.map(day => (
+                            <span key={day} className="text-xs font-medium px-1.5 py-0.5 rounded-md bg-emerald-50 text-emerald-700">
+                              {arabicDayAbbr[day] || day}
+                            </span>
+                          ))}
+                        </div>
+                      )}
                     </td>
                     <td>
                       <div className="flex items-center gap-2">
@@ -283,6 +322,29 @@ export default function EmployeesPage() {
                   <option value="رئيس لجنة">{t('role.head')}</option>
                   <option value="مساعد">{t('role.assistant')}</option>
                 </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{t('emp.modal.availability')}</label>
+                <div className="flex flex-wrap gap-2">
+                  {ALL_DAYS.map(day => {
+                    const isSelected = form.available_days?.includes(day) ?? false
+                    return (
+                      <button
+                        key={day}
+                        type="button"
+                        onClick={() => toggleDay(day)}
+                        className={`px-3 py-2 rounded-xl text-sm font-medium border-2 transition-all ${
+                          isSelected
+                            ? 'border-emerald-500 bg-emerald-50 text-emerald-700'
+                            : 'border-gray-200 text-gray-500 hover:bg-gray-50'
+                        }`}
+                      >
+                        {arabicDayAbbr[day]}
+                      </button>
+                    )
+                  })}
+                </div>
+                <p className="text-xs text-gray-400 mt-1.5">ℹ️ {t('emp.availability.hint')}</p>
               </div>
             </div>
             <div className="flex gap-3 p-6 pt-0">

@@ -91,7 +91,14 @@ export function autoDistribute(
   // Check if employee can be assigned to committee
   function canAssign(empId: string, committee: Committee): boolean {
     const empCommittees = getEmployeeCommittees(empId)
-    return !empCommittees.some(c => hasTimeConflict(c, committee))
+    if (empCommittees.some(c => hasTimeConflict(c, committee))) return false
+    // Check availability days
+    const emp = employees.find(e => e.id === empId)
+    if (emp && emp.available_days && emp.available_days.length > 0) {
+      const dayName = new Date(committee.exam_date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long' })
+      if (!emp.available_days.includes(dayName)) return false
+    }
+    return true
   }
 
   // Get available employees for a committee sorted by load
@@ -196,7 +203,12 @@ export function autoDistribute(
 
         let available = employees.filter(e =>
           !mainInPeriod.has(e.id) && !alreadyReserved.has(e.id)
-        )
+        ).filter(e => {
+          // Check availability days for reserve
+          if (!e.available_days || e.available_days.length === 0) return true
+          const dayName = new Date(date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long' })
+          return e.available_days.includes(dayName)
+        })
 
         if (mode === 'random') {
           available = available.sort(() => Math.random() - 0.5)
@@ -281,7 +293,12 @@ export function autoDistribute(
 
       let available = employees.filter(e =>
         !mainInPeriod.has(e.id) && !alreadyReserved.has(e.id)
-      )
+      ).filter(e => {
+        // Check availability days for reserve
+        if (!e.available_days || e.available_days.length === 0) return true
+        const dayName = new Date(date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long' })
+        return e.available_days.includes(dayName)
+      })
 
       if (mode === 'random') {
         available = available.sort(() => Math.random() - 0.5)

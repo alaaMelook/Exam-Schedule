@@ -12,6 +12,7 @@ export interface Employee {
   phone?: string
   department?: string
   role?: string
+  available_days?: string[] | null  // null = متاح كل الأيام
   created_at?: string
 }
 

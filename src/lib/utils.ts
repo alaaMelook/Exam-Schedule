@@ -35,3 +35,101 @@ export function formatTime(timeStr: string): string {
 export function formatTimeRange(start: string, end: string): string {
   return `${formatTime(start)} - ${formatTime(end)}`
 }
+
+/**
+ * Parse a date value from an Excel cell into YYYY-MM-DD format.
+ * Handles:
+ *  - null / undefined / empty string → null
+ *  - Excel serial numbers (e.g. 46175 → 2026-06-01)
+ *  - JS Date objects (from xlsx library with cellDates option)
+ *  - ISO strings (2026-06-01T00:00:00.000Z)
+ *  - YYYY-MM-DD strings
+ *  - DD/MM/YYYY strings
+ *  - MM/DD/YYYY strings (fallback when DD > 12 disambiguates)
+ */
+export function parseExcelDate(value: any): string | null {
+  // Handle null / undefined / empty
+  if (value === null || value === undefined || value === '') return null
+  if (typeof value === 'string' && value.trim() === '') return null
+
+  // Handle JS Date objects
+  if (value instanceof Date) {
+    if (isNaN(value.getTime())) return null
+    return formatDateToISO(value)
+  }
+
+  // Handle Excel serial number (a finite number, typically 1–2958465)
+  if (typeof value === 'number' && isFinite(value)) {
+    return excelSerialToDate(value)
+  }
+
+  const str = String(value).trim()
+
+  // Check if it's a numeric string (Excel serial as string)
+  if (/^\d+$/.test(str)) {
+    const num = parseInt(str, 10)
+    if (num > 0 && num < 2958466) { // max Excel date serial
+      return excelSerialToDate(num)
+    }
+  }
+
+  // Try YYYY-MM-DD (ISO format)
+  if (/^\d{4}-\d{2}-\d{2}/.test(str)) {
+    const d = new Date(str)
+    if (!isNaN(d.getTime())) return formatDateToISO(d)
+  }
+
+  // Try DD/MM/YYYY or MM/DD/YYYY
+  const slashMatch = str.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})$/)
+  if (slashMatch) {
+    const a = parseInt(slashMatch[1], 10)
+    const b = parseInt(slashMatch[2], 10)
+    const year = parseInt(slashMatch[3], 10)
+
+    // If first part > 12, it must be DD/MM/YYYY
+    if (a > 12 && b <= 12) {
+      return buildDateString(year, b, a)
+    }
+    // If second part > 12, it must be MM/DD/YYYY
+    if (b > 12 && a <= 12) {
+      return buildDateString(year, a, b)
+    }
+    // Ambiguous — assume DD/MM/YYYY (more common in Arabic-locale contexts)
+    if (a <= 12 && b <= 12) {
+      return buildDateString(year, b, a)
+    }
+  }
+
+  // Last resort: try native Date parsing
+  const fallback = new Date(str)
+  if (!isNaN(fallback.getTime())) return formatDateToISO(fallback)
+
+  return null
+}
+
+/** Convert Excel serial number to YYYY-MM-DD. Accounts for the Lotus 1-2-3 leap year bug. */
+function excelSerialToDate(serial: number): string | null {
+  if (serial < 1) return null
+  // Excel incorrectly treats 1900 as a leap year (Lotus 1-2-3 bug).
+  // Serial 60 = Feb 29, 1900 (doesn't exist). Serials > 60 are off by 1 day.
+  const adjusted = serial > 59 ? serial - 1 : serial
+  // Excel epoch: Jan 1 1900 = serial 1 → JS Date for Dec 31 1899
+  const epoch = new Date(Date.UTC(1899, 11, 31))
+  const date = new Date(epoch.getTime() + adjusted * 86400000)
+  if (isNaN(date.getTime())) return null
+  return formatDateToISO(date)
+}
+
+/** Format a Date to YYYY-MM-DD string */
+function formatDateToISO(d: Date): string {
+  const year = d.getUTCFullYear()
+  const month = String(d.getUTCMonth() + 1).padStart(2, '0')
+  const day = String(d.getUTCDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+/** Build a YYYY-MM-DD string from parts, with validation */
+function buildDateString(year: number, month: number, day: number): string | null {
+  if (month < 1 || month > 12 || day < 1 || day > 31) return null
+  return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+}
