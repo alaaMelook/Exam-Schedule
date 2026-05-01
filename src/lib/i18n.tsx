@@ -169,7 +169,7 @@ const translations = {
   'res.stat.reserves': { ar: 'الاحتياطيون', en: 'Reserves' },
 
   // ─── Employee Schedule Card ───
-  'card.sessions': { ar: 'إنسان الملحظين', en: 'Sessions' },
+  'card.sessions': { ar: 'عدد الملاحظات', en: 'Sessions' },
   'card.main': { ar: 'أساسي', en: 'Main' },
   'card.backup': { ar: 'احتياطي', en: 'Backup' },
   'card.noAssignments': { ar: 'لا توجد تكليفات لهذا الموظف', en: 'No assignments for this employee' },
@@ -177,7 +177,7 @@ const translations = {
   'card.col.branch': { ar: 'الفرع', en: 'Branch' },
   'card.col.time': { ar: 'الوقت', en: 'Time' },
   'card.col.location': { ar: 'المكان', en: 'Location' },
-  'card.col.college': { ar: 'الكمال', en: 'College' },
+  'card.col.college': { ar: 'كنترول', en: 'College' },
   'card.col.type': { ar: 'النوع', en: 'Type' },
 
   // ─── Common ───

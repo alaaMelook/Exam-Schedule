@@ -1,4 +1,4 @@
-import { Employee, Committee, Assignment } from './supabase'
+import { Employee, Committee, Assignment, ReserveAssignment } from './supabase'
 import { getArabicDay, formatDate, formatTime } from './utils'
 
 type ScheduleRow = Assignment & { committees: Committee }
@@ -105,7 +105,8 @@ export async function exportEmployeeExcel(employee: Employee, rows: ScheduleRow[
 
 export async function exportAllScheduleExcel(
   employees: Employee[],
-  allRows: Map<string, ScheduleRow[]>
+  allRows: Map<string, ScheduleRow[]>,
+  reserves: ReserveAssignment[] = []
 ) {
   const XLSX = await import('xlsx')
   const wb = XLSX.utils.book_new()
@@ -115,12 +116,13 @@ export async function exportAllScheduleExcel(
     ['اسم الموظف', 'القسم', 'عدد التكليفات', 'أساسي', 'احتياطي'],
     ...employees.map(emp => {
       const rows = allRows.get(emp.id) || []
+      const reserveCount = reserves.filter(r => r.employee_id === emp.id).length
       return [
         emp.name,
         emp.department || '',
-        rows.length,
+        rows.length + reserveCount,
         rows.filter(r => r.type === 'أساسي').length,
-        rows.filter(r => r.type === 'احتياطي').length,
+        reserveCount,
       ]
     })
   ]
@@ -180,8 +182,8 @@ async function buildDocxSection(employee: Employee, rows: ScheduleRow[], docxLib
     right: { style: BorderStyle.SINGLE, size: 1, color: '000000' },
   }
 
-  // Column widths in twips - RTL order: مكان اللجنة، كنترول، الساعة، التاريخ، اليوم، م
-  const colWidths = [3138, 1400, 1800, 1500, 1200, 600]
+  // Column widths in twips - RTL order: م، اليوم، التاريخ، الساعة، كنترول، مكان اللجنة
+  const colWidths = [600, 1200, 1500, 1800, 1400, 3138]
 
   function cell(text: string, colIdx: number, opts?: { bold?: boolean; shading?: string }) {
     return new TableCell({
@@ -202,24 +204,24 @@ async function buildDocxSection(employee: Employee, rows: ScheduleRow[], docxLib
 
   const headerRow = new TableRow({
     children: [
-      cell('مكان اللجنة', 0, { bold: true, shading: 'D9E2F3' }),
-      cell('كنترول', 1, { bold: true, shading: 'D9E2F3' }),
-      cell('الساعة', 2, { bold: true, shading: 'D9E2F3' }),
-      cell('التاريخ', 3, { bold: true, shading: 'D9E2F3' }),
-      cell('اليوم', 4, { bold: true, shading: 'D9E2F3' }),
-      cell('م', 5, { bold: true, shading: 'D9E2F3' }),
+      cell('م', 0, { bold: true, shading: 'D9E2F3' }),
+      cell('اليوم', 1, { bold: true, shading: 'D9E2F3' }),
+      cell('التاريخ', 2, { bold: true, shading: 'D9E2F3' }),
+      cell('الساعة', 3, { bold: true, shading: 'D9E2F3' }),
+      cell('كنترول', 4, { bold: true, shading: 'D9E2F3' }),
+      cell('مكان اللجنة', 5, { bold: true, shading: 'D9E2F3' }),
     ],
   })
 
   const dataRows = sorted.map((r, i) =>
     new TableRow({
       children: [
-        cell(`${r.committees.name} - ${r.committees.college}`, 0),
-        cell(r.committees.college.replace(/كلية\s*/g, '').trim(), 1),
-        cell(`${formatTime(r.committees.start_time)} - ${formatTime(r.committees.end_time)}`, 2),
-        cell(formatDate(r.committees.exam_date), 3),
-        cell(getArabicDay(r.committees.exam_date), 4),
-        cell(String(i + 1), 5),
+        cell(String(i + 1), 0),
+        cell(getArabicDay(r.committees.exam_date), 1),
+        cell(formatDate(r.committees.exam_date), 2),
+        cell(`${formatTime(r.committees.start_time)} - ${formatTime(r.committees.end_time)}`, 3),
+        cell(r.committees.college.replace(/كلية\s*/g, '').trim(), 4),
+        cell(`${r.committees.name} - ${r.committees.college}`, 5),
       ],
     })
   )

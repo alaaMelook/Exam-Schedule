@@ -164,7 +164,7 @@ export default function AssignmentsPage() {
     employees.forEach(e => {
       map.set(e.id, assignments.filter(a => a.employee_id === e.id).map(a => ({ ...a, committees: a.committees })) as ScheduleRow[])
     })
-    await exportAllScheduleExcel(employees, map)
+    await exportAllScheduleExcel(employees, map, reserves)
   }
 
   async function handleExportAllDocx() {

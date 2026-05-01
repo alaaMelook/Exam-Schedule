@@ -101,6 +101,41 @@ export function autoDistribute(
     return true
   }
 
+  /**
+   * Shuffle an array randomly using Fisher-Yates algorithm.
+   */
+  function shuffle<T>(arr: T[]): T[] {
+    const a = [...arr]
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1))
+      ;[a[i], a[j]] = [a[j], a[i]]
+    }
+    return a
+  }
+
+  /**
+   * Sort by load, but in random mode shuffle employees within the same load tier.
+   * This ensures balanced distribution while keeping it randomized.
+   */
+  function sortByBalancedLoad(list: Employee[]): Employee[] {
+    if (mode === 'sequential') {
+      return list.sort((a, b) => (load.get(a.id) || 0) - (load.get(b.id) || 0))
+    }
+    // Random-balanced: group by load, shuffle each group, concat
+    const groups = new Map<number, Employee[]>()
+    for (const emp of list) {
+      const l = load.get(emp.id) || 0
+      if (!groups.has(l)) groups.set(l, [])
+      groups.get(l)!.push(emp)
+    }
+    const sortedKeys = [...groups.keys()].sort((a, b) => a - b)
+    const result: Employee[] = []
+    for (const key of sortedKeys) {
+      result.push(...shuffle(groups.get(key)!))
+    }
+    return result
+  }
+
   // Get available employees for a committee sorted by load
   function getAvailableEmployees(committee: Committee): Employee[] {
     const alreadyAssigned = new Set([
@@ -112,11 +147,7 @@ export function autoDistribute(
       !alreadyAssigned.has(e.id) && canAssign(e.id, committee)
     )
 
-    if (mode === 'random') {
-      available = available.sort(() => Math.random() - 0.5)
-    } else {
-      available = available.sort((a, b) => (load.get(a.id) || 0) - (load.get(b.id) || 0))
-    }
+    available = sortByBalancedLoad(available)
 
     return available
   }
@@ -210,11 +241,7 @@ export function autoDistribute(
           return e.available_days.includes(dayName)
         })
 
-        if (mode === 'random') {
-          available = available.sort(() => Math.random() - 0.5)
-        } else {
-          available = available.sort((a, b) => (load.get(a.id) || 0) - (load.get(b.id) || 0))
-        }
+        available = sortByBalancedLoad(available)
 
         const toAssign = available.slice(0, stillNeeded)
 
@@ -300,11 +327,7 @@ export function autoDistribute(
         return e.available_days.includes(dayName)
       })
 
-      if (mode === 'random') {
-        available = available.sort(() => Math.random() - 0.5)
-      } else {
-        available = available.sort((a, b) => (load.get(a.id) || 0) - (load.get(b.id) || 0))
-      }
+      available = sortByBalancedLoad(available)
 
       const toAssign = available.slice(0, stillNeeded)
 
