@@ -221,7 +221,7 @@ async function buildDocxSection(employee: Employee, rows: ScheduleRow[], docxLib
         cell(formatDate(r.committees.exam_date), 2),
         cell(`${formatTime(r.committees.start_time)} - ${formatTime(r.committees.end_time)}`, 3),
         cell(r.committees.college.replace(/كلية\s*/g, '').trim(), 4),
-        cell(`${r.committees.name} - ${r.committees.college}`, 5),
+        cell(r.committees.location || '', 5),
       ],
     })
   )
